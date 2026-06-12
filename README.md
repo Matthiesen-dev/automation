@@ -29,7 +29,7 @@ These resources are designed to be called from other repositories using workflow
 - Required secret:
   - GITHUB_TOKEN (automatically provided by GitHub)
 
-3. .github/workflows/publish-modrinth-multiloader.yml
+2. .github/workflows/publish-modrinth-multiloader.yml
 
 - Purpose: Publish Fabric and NeoForge jars to Modrinth, then sync the Modrinth project description from a README.
 - Trigger: workflow_call
@@ -51,14 +51,14 @@ These resources are designed to be called from other repositories using workflow
 - Required secret:
   - MODRINTH_TOKEN
 
-2. .github/workflows/publish-modrinth-singleloader.yml
+3. .github/workflows/publish-modrinth-singleloader.yml
 
 - Purpose: Publish a single loader target (for example Fabric or NeoForge) to Modrinth, then sync the Modrinth project description from a README.
 - Trigger: workflow_call
 - Key behavior:
   - Downloads previously uploaded release artifacts.
   - Publishes one loader selected by input.
-  - Supports overriding published file glob with modrinth_publish_files.
+  - Delegates file selection to the optional-input-with-fallback action (uses modrinth_publish_files if provided, otherwise derives the path from artifact_basename, loader, and version).
   - Syncs Modrinth description using the configured README path.
 - Required inputs:
   - artifact_basename
@@ -150,6 +150,22 @@ These resources are designed to be called from other repositories using workflow
   - Runs ./gradlew copyJars.
   - Uploads output/*.jar as workflow artifacts.
   - Uploads output/*.jar to GitHub Release assets.
+
+4. .github/actions/optional-input-with-fallback/action.yml
+
+- Purpose: Return an optional input value if provided, otherwise return a required fallback value. Used internally by publish-modrinth-singleloader to resolve the publish file path.
+- Inputs:
+  - optional_input (optional)
+  - fallback_input (required)
+- Output:
+  - result
+
+5. .github/actions/send-discord-payload/action.yml
+
+- Purpose: Send a prepared Discord webhook JSON payload to a Discord webhook URL.
+- Inputs:
+  - payload (required)
+  - discord_webhook_url (required)
 
 ## Examples
 
