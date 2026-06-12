@@ -71,12 +71,10 @@ jobs:
     steps:
       - name: Parsed Files glob
         id: parsed_files
-        run: |
-          if [[ -n "${{ inputs.modrinth_publish_files }}" ]]; then
-            echo "files=${{ inputs.modrinth_publish_files }}" >> $GITHUB_OUTPUT
-          else
-            echo "files=output/${{ inputs.artifact_basename }}-${{ inputs.loader }}-${{ inputs.version }}.jar" >> $GITHUB_OUTPUT
-          fi
+        uses: matthiesen-dev/automation/.github/actions/optional-input-with-fallback@main
+        with:
+          optional_input: ${{ inputs.modrinth_publish_files }}
+          fallback_input: output/${{ inputs.artifact_basename }}-${{ inputs.loader }}-${{ inputs.version }}.jar
 
       - name: Download Release Artifacts
         uses: actions/download-artifact@v4
@@ -94,7 +92,7 @@ jobs:
           changelog: ${{ inputs.changelog }}
           loaders: ${{ inputs.loader }}
           game-versions: ${{ inputs.modrinth_game_version }}
-          files: ${{ steps.parsed_files.outputs.files }}
+          files: ${{ steps.parsed_files.outputs.result }}
           dependencies: ${{ inputs.modrinth_dependencies }}
 
   sync_description_modrinth:
