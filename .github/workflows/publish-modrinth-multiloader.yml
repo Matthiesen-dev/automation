@@ -43,6 +43,12 @@ on:
         required: true
         type: string
 
+      readme_path:
+        description: "The path to the README file to use for the Modrinth description."
+        required: false
+        type: string
+        default: "README.md"
+
 jobs:
   publish_modrinth:
     runs-on: ubuntu-latest
@@ -74,3 +80,20 @@ jobs:
           game-versions: ${{ inputs.modrinth_game_version }}
           files: output/${{ inputs.artifact_basename }}-${{ matrix.loader }}-${{ inputs.version }}.jar
           dependencies: ${{ inputs.modrinth_dependencies }}
+
+  sync_description_modrinth:
+    needs: publish_modrinth
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Sync Modrinth Description
+        uses: funnyboy-roks/modrinth-auto-desc@v1.7
+        with:
+          auth-token: ${{ inputs.modrinth_token }}
+          slug: ${{ inputs.modrinth_id }}
+          readme: ${{ inputs.readme_path }}
