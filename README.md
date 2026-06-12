@@ -8,7 +8,7 @@ Repository: https://github.com/Matthiesen-dev/automation
 
 This repository provides shared automation resources for release pipelines:
 
-- Reusable workflows for publishing Modrinth releases and Discord notifications.
+- Reusable workflows for publishing Modrinth releases (singleloader and multiloader) and Discord notifications.
 - Composite actions for parsing release versions and preparing Gradle release artifacts.
 
 These resources are designed to be called from other repositories using workflow_call and local composite action references.
@@ -39,7 +39,32 @@ These resources are designed to be called from other repositories using workflow
 - Required secret:
   - MODRINTH_TOKEN
 
-2. .github/workflows/publish-discord-release.yml
+2. .github/workflows/publish-modrinth-singleloader.yml
+
+- Purpose: Publish a single loader target (for example Fabric or NeoForge) to Modrinth, then sync the Modrinth project description from a README.
+- Trigger: workflow_call
+- Key behavior:
+  - Downloads previously uploaded release artifacts.
+  - Publishes one loader selected by input.
+  - Supports overriding published file glob with modrinth_publish_files.
+  - Syncs Modrinth description using the configured README path.
+- Required inputs:
+  - artifact_basename
+  - mod_name
+  - version
+  - changelog
+  - loader
+  - modrinth_game_version
+  - modrinth_id
+- Optional inputs:
+  - artifact_prefix (default: release-jars)
+  - modrinth_dependencies (default: [])
+  - readme_path (default: README.md)
+  - modrinth_publish_files (default behavior publishes output/<artifact_basename>-<loader>-<version>.jar)
+- Required secret:
+  - MODRINTH_TOKEN
+
+3. .github/workflows/publish-discord-release.yml
 
 - Purpose: Send a Discord webhook embed for a new release.
 - Trigger: workflow_call
@@ -135,6 +160,22 @@ jobs:
       changelog: ${{ github.event.release.body }}
       modrinth_game_version: "1.21.1"
       modrinth_id: your-modrinth-project-id
+    secrets:
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+
+  publish_modrinth_singleloader:
+    needs: prepare
+    uses: Matthiesen-dev/automation/.github/workflows/publish-modrinth-singleloader.yml@main
+    with:
+      artifact_basename: my-mod
+      mod_name: My Mod
+      version: ${{ needs.prepare.outputs.version }}
+      changelog: ${{ github.event.release.body }}
+      loader: fabric
+      modrinth_game_version: "1.21.1"
+      modrinth_id: your-modrinth-project-id
+      # Optional: override file selection if your artifact naming differs
+      # modrinth_publish_files: output/custom-name-*.jar
     secrets:
       MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
 
