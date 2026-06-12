@@ -84,7 +84,7 @@ jobs:
           extra_dependencies: ${{ matrix.loader == 'fabric' && inputs.modrinth_fabric_dependencies || matrix.loader == 'neoforge' && inputs.modrinth_neoforge_dependencies || '[]' }}
 
       - name: Download Release Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ inputs.artifact_prefix }}-${{ inputs.version }}
           path: ${{ inputs.copy_file_outdir }}
@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
