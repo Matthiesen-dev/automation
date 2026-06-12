@@ -63,6 +63,16 @@ on:
         required: false
         type: string
         default: "output"
+      java_version:
+        description: "The Java version to use for the release preparation."
+        required: false
+        type: string
+        default: "21"
+      java_distribution:
+        description: "The Java distribution to use for the release preparation."
+        required: false
+        type: string
+        default: "temurin"
     secrets:
       git_token:
         description: "GitHub token for authentication (automatically provided by GitHub)."
@@ -79,6 +89,8 @@ jobs:
     uses: matthiesen-dev/automation/.github/workflows/prepare-publishing.yml@main
     with:
       tag_name: ${{ inputs.tag_name }}
+      java_version: ${{ inputs.java_version }}
+      java_distribution: ${{ inputs.java_distribution }}
     secrets:
       git_token: ${{ secrets.git_token }}
 

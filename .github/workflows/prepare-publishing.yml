@@ -7,6 +7,16 @@ on:
         description: "The tag name to parse the version from."
         required: true
         type: string
+      java_version:
+        description: "The Java version to use for the release preparation."
+        required: false
+        type: string
+        default: "21"
+      java_distribution:
+        description: "The Java distribution to use for the release preparation."
+        required: false
+        type: string
+        default: "temurin"
     secrets:
       git_token:
         description: "GitHub token for authentication (automatically provided by GitHub)."
@@ -37,3 +47,5 @@ jobs:
         with:
           version: ${{ steps.parse_version.outputs.version }}
           token: ${{ secrets.git_token }}
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
