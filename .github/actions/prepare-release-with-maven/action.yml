@@ -1,4 +1,4 @@
-name: Prepare Release
+name: Prepare Release with Maven Publishing (maven.matthiesen.dev repository)
 description: Prepares the release by parsing the version and setting it as an output variable.
 
 inputs:
@@ -20,6 +20,14 @@ inputs:
     default: "temurin"
   token:
     description: "The GitHub token to use for authentication when uploading artifacts."
+    required: true
+    default: ""
+  maven_username:
+    description: "The username for authenticating with the maven.matthiesen.dev repository."
+    required: true
+    default: ""
+  maven_password:
+    description: "The password for authenticating with the maven.matthiesen.dev repository."
     required: true
     default: ""
 
@@ -45,11 +53,13 @@ runs:
       shell: bash
       run: chmod +x ./gradlew
 
-    - name: Build with Gradle
+    - name: Build and Publish with Gradle to maven.matthiesen.dev
       shell: bash
-      run: ./gradlew build
+      run: ./gradlew build publishAllPublicationsToDevMatthiesenMavenRepository
       env:
         RELEASE_VERSION: ${{ inputs.version }}
+        ORG_GRADLE_PROJECT_devMatthiesenMavenUsername: ${{ inputs.maven_username }}
+        ORG_GRADLE_PROJECT_devMatthiesenMavenPassword: ${{ inputs.maven_password }}
 
     - name: Copy Jars for Release
       shell: bash
