@@ -1,0 +1,40 @@
+name: Parse Release Version
+description: Parses the release version from the tag name and sets it as an output variable.
+
+inputs:
+  tag_name:
+    description: "The tag name to parse the version from."
+    required: true
+    default: ""
+
+outputs:
+  version:
+    description: "The parsed version from the tag name."
+    value: ${{ steps.parse_version.outputs.version }}
+  is_snapshot:
+    description: "Indicates if the version is a snapshot version."
+    value: ${{ steps.parse_version.outputs.is_snapshot }}
+
+runs:
+  using: composite
+  steps:
+    - name: Parse Version
+      id: parse_version
+      shell: bash
+      run: |
+        #!/bin/bash
+        set -e
+
+        TAG_NAME="${{ inputs.tag_name }}"
+
+        # Extract version from tag name (assuming format vX.Y.Z or X.Y.Z)
+        VERSION=$(echo "$TAG_NAME" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?)$/\1/')
+
+        if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
+          IS_SNAPSHOT="true"
+        else
+          IS_SNAPSHOT="false"
+        fi
+
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "is_snapshot=$IS_SNAPSHOT" >> $GITHUB_OUTPUT
