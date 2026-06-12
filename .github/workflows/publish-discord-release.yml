@@ -1,0 +1,199 @@
+name: Publish Discord Release Notification
+
+on:
+  workflow_call:
+    inputs:
+      mod_name:
+        description: "The display name of the mod."
+        required: true
+        type: string
+
+      version:
+        description: "The release version to display."
+        required: true
+        type: string
+
+      changelog:
+        description: "The changelog text for the embed description."
+        required: false
+        type: string
+        default: ""
+
+      modrinth_game_version:
+        description: "Target Minecraft version string shown in the embed."
+        required: false
+        type: string
+        default: ""
+
+      modrinth_id:
+        description: "Modrinth project ID for the download link."
+        required: false
+        type: string
+        default: ""
+
+      fabric_loader_version:
+        description: "Fabric loader version for this release."
+        required: false
+        type: string
+        default: ""
+
+      neoforge_loader_version:
+        description: "NeoForge loader version for this release."
+        required: false
+        type: string
+        default: ""
+
+      discord_icon_url:
+        description: "Optional icon URL used as the embed thumbnail."
+        required: false
+        type: string
+        default: ""
+
+      github_release_url:
+        description: "Optional GitHub release URL override."
+        required: false
+        type: string
+        default: ""
+
+      webhook_username:
+        description: "Display name for the Discord webhook message."
+        required: false
+        type: string
+        default: "Matthiesen Release Bot"
+
+      webhook_avatar_url:
+        description: "Avatar URL for the Discord webhook message."
+        required: false
+        type: string
+        default: "https://raw.githubusercontent.com/Matthiesen-dev/.github/refs/heads/main/logo-transparent.png"
+
+    secrets:
+      discord_webhook_url:
+        description: "Discord webhook URL."
+        required: true
+
+jobs:
+  send_discord_notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Discord Embed Payload
+        id: build_payload
+        env:
+          MOD_NAME: ${{ inputs.mod_name }}
+          VERSION: ${{ inputs.version }}
+          CHANGELOG: ${{ inputs.changelog }}
+          MODRINTH_GAME_VERSION: ${{ inputs.modrinth_game_version }}
+          MODRINTH_ID: ${{ inputs.modrinth_id }}
+          FABRIC_LOADER_VERSION: ${{ inputs.fabric_loader_version }}
+          NEOFORGE_LOADER_VERSION: ${{ inputs.neoforge_loader_version }}
+          DISCORD_ICON_URL: ${{ inputs.discord_icon_url }}
+          GITHUB_RELEASE_URL: ${{ inputs.github_release_url }}
+          WEBHOOK_USERNAME: ${{ inputs.webhook_username }}
+          WEBHOOK_AVATAR_URL: ${{ inputs.webhook_avatar_url }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+          EVENT_RELEASE_URL: ${{ github.event.release.html_url }}
+        run: |
+          set -euo pipefail
+
+          title="New Release: ${MOD_NAME} ${VERSION}"
+
+          if [[ -n "${CHANGELOG}" ]]; then
+            description="${CHANGELOG}"
+          else
+            description="No changelog was provided for this release."
+          fi
+
+          platform_lines=()
+          if [[ -n "${FABRIC_LOADER_VERSION}" ]]; then
+            platform_lines+=("- Fabric \`${FABRIC_LOADER_VERSION}\`")
+          fi
+          if [[ -n "${NEOFORGE_LOADER_VERSION}" ]]; then
+            platform_lines+=("- NeoForge \`${NEOFORGE_LOADER_VERSION}\`")
+          fi
+
+          if [[ ${#platform_lines[@]} -eq 0 ]]; then
+            platforms_value="No loader-specific build was published for this release."
+          else
+            platforms_value="$(printf '%s\n' "${platform_lines[@]}")"
+          fi
+
+          if [[ -n "${MODRINTH_GAME_VERSION}" ]]; then
+            mc_version_value="\`${MODRINTH_GAME_VERSION}\`"
+          else
+            mc_version_value="Not specified"
+          fi
+
+          if [[ -n "${MODRINTH_ID}" ]]; then
+            modrinth_value="[Modrinth](https://modrinth.com/mod/${MODRINTH_ID}/)"
+          else
+            modrinth_value="Not published on Modrinth"
+          fi
+
+          if [[ -n "${GITHUB_RELEASE_URL}" ]]; then
+            github_release_value="${GITHUB_RELEASE_URL}"
+          elif [[ -n "${EVENT_RELEASE_URL}" && "${EVENT_RELEASE_URL}" != "null" ]]; then
+            github_release_value="${EVENT_RELEASE_URL}"
+          else
+            github_release_value="${SERVER_URL}/${REPOSITORY}/releases/"
+          fi
+
+          payload=$(jq -cn \
+            --arg username "${WEBHOOK_USERNAME}" \
+            --arg avatar_url "${WEBHOOK_AVATAR_URL}" \
+            --arg title "${title}" \
+            --arg description "${description}" \
+            --arg icon_url "${DISCORD_ICON_URL}" \
+            --arg platforms "${platforms_value}" \
+            --arg mc_version "${mc_version_value}" \
+            --arg modrinth "${modrinth_value}" \
+            --arg github_release_url "${github_release_value}" \
+            '{
+              "username": $username,
+              "avatar_url": $avatar_url,
+              "embeds": [
+                (
+                  {
+                    "title": $title,
+                    "description": $description,
+                    "color": 5763719,
+                    "thumbnail": (if $icon_url != "" then {"url": $icon_url} else null end),
+                    "fields": [
+                      {
+                        "name": "Available Platforms",
+                        "value": $platforms,
+                        "inline": true
+                      },
+                      {
+                        "name": "MC Version",
+                        "value": $mc_version,
+                        "inline": true
+                      },
+                      {
+                        "name": "Download on Modrinth",
+                        "value": $modrinth,
+                        "inline": false
+                      },
+                      {
+                        "name": "Download on GitHub",
+                        "value": ("[GitHub Release](" + $github_release_url + ")"),
+                        "inline": true
+                      }
+                    ]
+                  }
+                  | with_entries(select(.value != null))
+                )
+              ]
+            }'
+          )
+
+          echo "payload=$payload" >> "$GITHUB_OUTPUT"
+
+      - name: Send Discord Notification
+        env:
+          PAYLOAD: ${{ steps.build_payload.outputs.payload }}
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            --data-raw "$PAYLOAD" \
+            "${{ secrets.discord_webhook_url }}"
