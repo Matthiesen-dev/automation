@@ -1,0 +1,61 @@
+name: Prepare Release
+description: Prepares the release by parsing the version and setting it as an output variable.
+
+inputs:
+  java_version:
+    description: "The Java version to use for the release preparation."
+    required: true
+    default: "21"
+  java_distribution:
+    description: "The Java distribution to use for the release preparation."
+    required: true
+    default: "temurin"
+  version:
+    description: "The parsed version from the tag name."
+    required: true
+    default: ""
+  artifact_prefix:
+    description: "The prefix for the release artifacts."
+    required: false
+    default: "release-jars"
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java_version }}
+        distribution: ${{ inputs.java_distribution }}
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Build with Gradle
+      shell: bash
+      run: ./gradlew build
+      env:
+        RELEASE_VERSION: ${{ inputs.version }}
+
+    - name: Copy Jars for Release
+      shell: bash
+      run: ./gradlew copyJars
+
+    - name: Upload Release Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_prefix }}-${{ inputs.version }}
+        path: output/*.jar
+
+    - name: Upload Release Artifacts to Github Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: output/*.jar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
