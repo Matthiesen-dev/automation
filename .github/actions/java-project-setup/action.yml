@@ -1,0 +1,34 @@
+name: Java Project Setup
+description: Sets up the Java environment for the project, including checking out the repository, setting up Java, and ensuring Gradle is ready to use.
+
+inputs:
+  java_version:
+    description: "The Java version to set up for the project."
+    required: false
+    default: "21"
+  java_distribution:
+    description: "The Java distribution to set up for the project."
+    required: false
+    default: "temurin"
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java_version }}
+        distribution: ${{ inputs.java_distribution }}
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Ensure Executable Permissions for Gradle Wrapper
+      shell: bash
+      run: chmod +x ./gradlew
