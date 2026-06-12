@@ -1,0 +1,31 @@
+name: Optional Input with Fallback
+description: A reusable action that demonstrates how to handle optional inputs with default values.
+
+inputs:
+  optional_input:
+    description: "An optional input that can be left blank."
+    required: false
+    default: "This is the default value."
+  fallback_input:
+    description: "An optional input that will be used if the first input is left blank."
+    required: true
+
+outputs:
+  result:
+    description: "The result of the action, which will be either the optional input or the fallback input."
+    value: ${{ steps.set_result.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set Result
+      id: set_result
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.optional_input }}" ]; then
+          echo "optional_input is empty, using fallback_input."
+          echo "result=${{ inputs.fallback_input }}" >> $GITHUB_OUTPUT
+        else
+          echo "optional_input is provided, using it."
+          echo "result=${{ inputs.optional_input }}" >> $GITHUB_OUTPUT
+        fi
