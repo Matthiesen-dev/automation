@@ -85,6 +85,7 @@ jobs:
   publish_modrinth:
     needs: prepare
     uses: matthiesen-dev/automation/.github/workflows/publish-modrinth-multiloader.yml@main
+    if: ${{ needs.prepare.outputs.is_snapshot != 'true' }}
     with:
       artifact_basename: ${{ inputs.artifact_basename }}
       mod_name: ${{ inputs.mod_name }}
@@ -101,6 +102,7 @@ jobs:
 
   notify_discord:
     needs: [prepare, publish_modrinth]
+    if: ${{ needs.prepare.outputs.is_snapshot != 'true' }}
     uses: matthiesen-dev/automation/.github/workflows/publish-discord-release.yml@main
     with:
       mod_name: ${{ inputs.mod_name }}
