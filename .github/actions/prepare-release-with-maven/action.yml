@@ -34,24 +34,11 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - name: Project Setup
+      uses: matthiesen-dev/automation/.github/actions/java-project-setup@main
       with:
-        fetch-depth: 0
-        fetch-tags: true
-
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        java-version: ${{ inputs.java_version }}
-        distribution: ${{ inputs.java_distribution }}
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
-
-    - name: Ensure Executable Permissions
-      shell: bash
-      run: chmod +x ./gradlew
+        java_version: ${{ inputs.java_version }}
+        java_distribution: ${{ inputs.java_distribution }}
 
     - name: Build and Publish with Gradle to maven.matthiesen.dev
       shell: bash
