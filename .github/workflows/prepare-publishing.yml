@@ -7,12 +7,10 @@ on:
         description: "The tag name to parse the version from."
         required: true
         type: string
-
     secrets:
       GITHUB_TOKEN:
         description: "GitHub token for authentication (automatically provided by GitHub)."
         required: true
-
     outputs:
       version:
         description: "The parsed version from the tag name."

@@ -5,51 +5,41 @@ inputs:
   mod_name:
     description: "The display name of the mod."
     required: true
-
   version:
     description: "The release version to display."
     required: true
-
   changelog:
     description: "The changelog text for the embed description."
     required: false
     default: ""
-
   modrinth_game_version:
     description: "Target Minecraft version string shown in the embed."
     required: false
     default: ""
-
   modrinth_id:
     description: "Modrinth project ID for the download link."
     required: false
     default: ""
-
   fabric_loader_version:
     description: "Fabric loader version for this release."
     required: false
     default: ""
-
   neoforge_loader_version:
     description: "NeoForge loader version for this release."
     required: false
     default: ""
-
   discord_icon_url:
     description: "Optional icon URL used as the embed thumbnail."
     required: false
     default: ""
-
   github_release_url:
     description: "Optional GitHub release URL override."
     required: false
     default: ""
-
   webhook_username:
     description: "Display name for the Discord webhook message."
     required: false
     default: "Matthiesen Release Bot"
-
   webhook_avatar_url:
     description: "Avatar URL for the Discord webhook message."
     required: false

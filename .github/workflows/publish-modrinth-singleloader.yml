@@ -8,12 +8,10 @@ on:
         required: false
         type: string
         default: "release-jars"
-
       artifact_basename:
         description: "The base name for the release artifacts (without loader and version)."
         required: true
         type: string
-
       mod_name:
         description: "The name of the mod to publish."
         required: true
@@ -28,12 +26,10 @@ on:
         required: true
         type: string
         default: ""
-
       loader:
         description: "The loader to target for this release (e.g., fabric, neoforge)."
         required: true
         type: string
-
       modrinth_game_version:
         description: "The game version to target on Modrinth."
         required: true
@@ -43,23 +39,19 @@ on:
         required: false
         type: string
         default: "[]"
-
       modrinth_id:
         description: "The Modrinth project ID to publish to."
         required: true
         type: string
-
       readme_path:
         description: "The path to the README file to use for the Modrinth description."
         required: false
         type: string
         default: "README.md"
-
       modrinth_publish_files:
         description: "The glob pattern for the files to publish to Modrinth (relative to the artifact download path)."
         required: false
         type: string
-
     secrets:
       MODRINTH_TOKEN:
         description: "The Modrinth API token to use for authentication."

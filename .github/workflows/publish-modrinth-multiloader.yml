@@ -8,12 +8,10 @@ on:
         required: false
         type: string
         default: "release-jars"
-
       artifact_basename:
         description: "The base name for the release artifacts (without loader and version)."
         required: true
         type: string
-
       mod_name:
         description: "The name of the mod to publish."
         required: true
@@ -28,7 +26,6 @@ on:
         required: true
         type: string
         default: ""
-
       modrinth_game_version:
         description: "The game version to target on Modrinth."
         required: true
@@ -38,18 +35,15 @@ on:
         required: false
         type: string
         default: "[]"
-
       modrinth_id:
         description: "The Modrinth project ID to publish to."
         required: true
         type: string
-
       readme_path:
         description: "The path to the README file to use for the Modrinth description."
         required: false
         type: string
         default: "README.md"
-
     secrets:
       MODRINTH_TOKEN:
         description: "The Modrinth API token to use for authentication."
@@ -66,7 +60,6 @@ jobs:
             name_suffix: "Fabric"
           - loader: "neoforge"
             name_suffix: "NeoForge"
-
     steps:
       - name: Download Release Artifacts
         uses: actions/download-artifact@v4
