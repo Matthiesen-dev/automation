@@ -5,9 +5,8 @@ on:
     inputs:
       artifact_prefix:
         description: "The prefix for the release artifacts."
-        required: false
+        required: true
         type: string
-        default: "release-jars"
       artifact_basename:
         description: "The base name for the release artifacts (without loader and version)."
         required: true
@@ -25,25 +24,40 @@ on:
         description: "The changelog to include in the Modrinth release."
         required: true
         type: string
-        default: ""
       modrinth_game_version:
         description: "The game version to target on Modrinth."
         required: true
         type: string
+      modrinth_id:
+        description: "The Modrinth project ID to publish to."
+        required: true
+        type: string
+
       modrinth_dependencies:
         description: "The dependencies to set for the Modrinth release (in JSON format)."
         required: false
         type: string
         default: "[]"
-      modrinth_id:
-        description: "The Modrinth project ID to publish to."
-        required: true
+      modrinth_fabric_dependencies:
+        description: "The dependencies to set for the Modrinth release (in JSON format) for Fabric loader."
+        required: false
         type: string
+        default: "[]"
+      modrinth_neoforge_dependencies:
+        description: "The dependencies to set for the Modrinth release (in JSON format) for NeoForge loader."
+        required: false
+        type: string
+        default: "[]"
       readme_path:
         description: "The path to the README file to use for the Modrinth description."
         required: false
         type: string
         default: "README.md"
+      copy_file_outdir:
+        description: "The directory to copy the published files to after publishing (relative to the artifact download path)."
+        required: false
+        type: string
+        default: "output"
     secrets:
       MODRINTH_TOKEN:
         description: "The Modrinth API token to use for authentication."
@@ -61,11 +75,36 @@ jobs:
           - loader: "neoforge"
             name_suffix: "NeoForge"
     steps:
+      - name: Determine dependencies for ${{ matrix.name_suffix  }}
+        id: determine_dependencies
+        run: |
+          base_dependencies="${{ inputs.modrinth_dependencies }}"
+          if [ "${{ matrix.loader }}" = "fabric" ]; then
+            loader_dependencies="${{ inputs.modrinth_fabric_dependencies }}"
+          elif [ "${{ matrix.loader }}" = "neoforge" ]; then
+            loader_dependencies="${{ inputs.modrinth_neoforge_dependencies }}"
+          else
+            echo "Unknown loader: ${{ matrix.loader }}"
+            exit 1
+          fi
+          if [ -n "$loader_dependencies" ] && [ "$loader_dependencies" != "[]" ]; then
+            if [ -n "$base_dependencies" ] && [ "$base_dependencies" != "[]" ]; then
+              # Merge base and loader-specific dependencies
+              merged_dependencies=$(jq -cn --argjson base "$base_dependencies" --argjson loader "$loader_dependencies" '$base + $loader')
+            else
+              merged_dependencies="$loader_dependencies"
+            fi
+          else
+            merged_dependencies="$base_dependencies"
+          fi
+          echo "Merged dependencies: $merged_dependencies"
+          echo "dependencies=$merged_dependencies" >> "$GITHUB_OUTPUT"
+
       - name: Download Release Artifacts
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.artifact_prefix }}-${{ inputs.version }}
-          path: output
+          path: ${{ inputs.copy_file_outdir }}
 
       - name: Publish ${{ matrix.name_suffix }} to Modrinth
         uses: cloudnode-pro/modrinth-publish@v2
@@ -77,8 +116,8 @@ jobs:
           changelog: ${{ inputs.changelog }}
           loaders: ${{ matrix.loader }}
           game-versions: ${{ inputs.modrinth_game_version }}
-          files: output/${{ inputs.artifact_basename }}-${{ matrix.loader }}-${{ inputs.version }}.jar
-          dependencies: ${{ inputs.modrinth_dependencies }}
+          files: ${{ inputs.copy_file_outdir }}/${{ inputs.artifact_basename }}-${{ matrix.loader }}-${{ inputs.version }}.jar
+          dependencies: ${{ steps.determine_dependencies.outputs.dependencies }}
 
   sync_description_modrinth:
     needs: publish_modrinth

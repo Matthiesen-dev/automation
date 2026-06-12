@@ -40,6 +40,16 @@ on:
         required: false
         type: string
         default: "[]"
+      modrinth_fabric_dependencies:
+        description: "The dependencies to set for the Modrinth release (in JSON format) for Fabric loader."
+        required: false
+        type: string
+        default: "[]"
+      modrinth_neoforge_dependencies:
+        description: "The dependencies to set for the Modrinth release (in JSON format) for NeoForge loader."
+        required: false
+        type: string
+        default: "[]"
       github_release_url:
         description: "Optional GitHub release URL override."
         required: false
@@ -48,6 +58,11 @@ on:
         description: "Optional icon URL used as the embed thumbnail."
         required: false
         type: string
+      copy_file_outdir:
+        description: "The directory to copy the published files to after publishing (relative to the artifact download path)."
+        required: false
+        type: string
+        default: "output"
     secrets:
       git_token:
         description: "GitHub token for authentication (automatically provided by GitHub)."
@@ -78,6 +93,9 @@ jobs:
       modrinth_game_version: ${{ inputs.modrinth_game_version }}
       modrinth_id: ${{ inputs.modrinth_id }}
       modrinth_dependencies: ${{ inputs.modrinth_dependencies }}
+      modrinth_fabric_dependencies: ${{ inputs.modrinth_fabric_dependencies }}
+      modrinth_neoforge_dependencies: ${{ inputs.modrinth_neoforge_dependencies }}
+      copy_file_outdir: ${{ inputs.copy_file_outdir }}
     secrets:
       MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
 
