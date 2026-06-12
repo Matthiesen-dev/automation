@@ -76,30 +76,12 @@ jobs:
           - loader: "neoforge"
             name_suffix: "NeoForge"
     steps:
-      - name: Determine dependencies for ${{ matrix.name_suffix  }}
+      - name: Determine Dependencies for ${{ matrix.name_suffix }}
         id: determine_dependencies
-        run: |
-          base_dependencies="${{ inputs.modrinth_dependencies }}"
-          if [ "${{ matrix.loader }}" = "fabric" ]; then
-            loader_dependencies="${{ inputs.modrinth_fabric_dependencies }}"
-          elif [ "${{ matrix.loader }}" = "neoforge" ]; then
-            loader_dependencies="${{ inputs.modrinth_neoforge_dependencies }}"
-          else
-            echo "Unknown loader: ${{ matrix.loader }}"
-            exit 1
-          fi
-          if [ -n "$loader_dependencies" ] && [ "$loader_dependencies" != "[]" ]; then
-            if [ -n "$base_dependencies" ] && [ "$base_dependencies" != "[]" ]; then
-              # Merge base and loader-specific dependencies
-              merged_dependencies=$(jq -cn --argjson base "$base_dependencies" --argjson loader "$loader_dependencies" '$base + $loader')
-            else
-              merged_dependencies="$loader_dependencies"
-            fi
-          else
-            merged_dependencies="$base_dependencies"
-          fi
-          echo "Merged dependencies: $merged_dependencies"
-          echo "dependencies=$merged_dependencies" >> "$GITHUB_OUTPUT"
+        uses: matthiesen-dev/automation/.github/actions/determine-dependencies@main
+        with:
+          base_dependencies: ${{ inputs.modrinth_dependencies }}
+          extra_dependencies: ${{ matrix.loader == 'fabric' && inputs.modrinth_fabric_dependencies || matrix.loader == 'neoforge' && inputs.modrinth_neoforge_dependencies || '[]' }}
 
       - name: Download Release Artifacts
         uses: actions/download-artifact@v4
@@ -118,7 +100,7 @@ jobs:
           loaders: ${{ matrix.loader }}
           game-versions: ${{ inputs.modrinth_game_version }}
           files: ${{ inputs.copy_file_outdir }}/${{ inputs.artifact_basename }}-${{ matrix.loader }}-${{ inputs.version }}.jar
-          dependencies: ${{ steps.determine_dependencies.outputs.dependencies }}
+          dependencies: ${{ steps.determine_dependencies.outputs.merged_dependencies }}
 
   sync_description_modrinth:
     needs: publish_modrinth
