@@ -2,14 +2,6 @@ name: Prepare Release
 description: Prepares the release by parsing the version and setting it as an output variable.
 
 inputs:
-  java_version:
-    description: "The Java version to use for the release preparation."
-    required: true
-    default: "21"
-  java_distribution:
-    description: "The Java distribution to use for the release preparation."
-    required: true
-    default: "temurin"
   version:
     description: "The parsed version from the tag name."
     required: true
@@ -18,6 +10,14 @@ inputs:
     description: "The prefix for the release artifacts."
     required: false
     default: "release-jars"
+  java_version:
+    description: "The Java version to use for the release preparation."
+    required: false
+    default: "21"
+  java_distribution:
+    description: "The Java distribution to use for the release preparation."
+    required: false
+    default: "temurin"
 
 runs:
   using: composite
