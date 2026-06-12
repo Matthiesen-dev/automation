@@ -1,0 +1,40 @@
+name: Copy and Upload Release Assets
+description: Copies the release assets from the build output and uploads them to the GitHub release.
+
+inputs:
+  version:
+    description: "The parsed version from the tag name."
+    required: true
+    default: ""
+  artifact_prefix:
+    description: "The prefix for the release artifacts."
+    required: false
+    default: "release-jars"
+  token:
+    description: "The GitHub token to use for authentication when uploading artifacts."
+    required: true
+    default: ""
+  file-glob-pattern:
+    description: "The glob pattern to match the files to be uploaded as release assets."
+    required: false
+    default: "output/*.jar"
+
+runs:
+  using: composite
+  steps:
+    - name: Copy Jars for Release
+      shell: bash
+      run: ./gradlew copyJars
+
+    - name: Upload Release Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_prefix }}-${{ inputs.version }}
+        path: ${{ inputs.file-glob-pattern }}
+
+    - name: Upload Release Artifacts to Github Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ inputs.file-glob-pattern }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}

@@ -22,6 +22,10 @@ inputs:
     description: "The GitHub token to use for authentication when uploading artifacts."
     required: true
     default: ""
+  file-glob-pattern:
+    description: "The glob pattern to match the files to be uploaded as release assets."
+    required: false
+    default: "output/*.jar"
 
 runs:
   using: composite
@@ -38,19 +42,10 @@ runs:
       env:
         RELEASE_VERSION: ${{ inputs.version }}
 
-    - name: Copy Jars for Release
-      shell: bash
-      run: ./gradlew copyJars
-
-    - name: Upload Release Artifacts
-      uses: actions/upload-artifact@v4
+    - name: Copy and Upload Release Assets
+      uses: matthiesen-dev/automation/.github/actions/copy-upload-release-assets@main
       with:
-        name: ${{ inputs.artifact_prefix }}-${{ inputs.version }}
-        path: output/*.jar
-
-    - name: Upload Release Artifacts to Github Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: output/*.jar
-      env:
-        GITHUB_TOKEN: ${{ inputs.token }}
+        version: ${{ inputs.version }}
+        artifact_prefix: ${{ inputs.artifact_prefix }}
+        token: ${{ inputs.token }}
+        file-glob-pattern: ${{ inputs.file-glob-pattern }}
