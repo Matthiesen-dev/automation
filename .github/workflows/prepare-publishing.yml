@@ -8,7 +8,7 @@ on:
         required: true
         type: string
     secrets:
-      GITHUB_TOKEN:
+      git_token:
         description: "GitHub token for authentication (automatically provided by GitHub)."
         required: true
     outputs:
@@ -36,4 +36,4 @@ jobs:
         uses: matthiesen-dev/automation/.github/actions/prepare-release@main
         with:
           version: ${{ steps.parse_version.outputs.version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.git_token }}

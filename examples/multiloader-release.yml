@@ -20,7 +20,7 @@ jobs:
     with:
       tag_name: ${{ github.event.release.tag_name }}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      git_token: ${{ secrets.GITHUB_TOKEN }}
 
   publish_modrinth:
     needs: prepare
