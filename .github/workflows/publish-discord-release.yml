@@ -93,10 +93,7 @@ jobs:
           webhook_avatar_url: ${{ inputs.webhook_avatar_url }}
 
       - name: Send Discord Notification
-        env:
-          PAYLOAD: ${{ steps.build_payload.outputs.payload }}
-        run: |
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            --data-raw "$PAYLOAD" \
-            "${{ secrets.discord_webhook_url }}"
+        uses: matthiesen-dev/automation/.github/actions/send-discord-payload@main
+        with:
+          payload: ${{ steps.build_payload.outputs.payload }}
+          discord_webhook_url: ${{ secrets.discord_webhook_url }}
