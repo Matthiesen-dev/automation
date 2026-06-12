@@ -1,0 +1,41 @@
+name: Prepare Publishing
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: "The tag name to parse the version from."
+        required: true
+        type: string
+
+    secrets:
+      GITHUB_TOKEN:
+        description: "GitHub token for authentication (automatically provided by GitHub)."
+        required: true
+
+    outputs:
+      version:
+        description: "The parsed version from the tag name."
+        value: ${{ jobs.parse.outputs.version }}
+      is_snapshot:
+        description: "Indicates if the version is a snapshot version."
+        value: ${{ jobs.parse.outputs.is_snapshot }}
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse_version.outputs.version }}
+      is_snapshot: ${{ steps.parse_version.outputs.is_snapshot }}
+    steps:
+      - name: Parse Version
+        id: parse_version
+        uses: matthiesen-dev/automation/.github/actions/parse-version@main
+        with:
+          tag_name: ${{ inputs.tag_name }}
+
+      - name: Prepare release artifacts
+        uses: matthiesen-dev/automation/.github/actions/prepare-release@main
+        with:
+          version: ${{ steps.parse_version.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
