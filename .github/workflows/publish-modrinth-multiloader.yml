@@ -23,6 +23,11 @@ on:
         required: true
         type: string
         default: ""
+      changelog:
+        description: "The changelog to include in the Modrinth release."
+        required: true
+        type: string
+        default: ""
 
       modrinth_game_version:
         description: "The game version to target on Modrinth."
@@ -75,7 +80,7 @@ jobs:
           project: ${{ inputs.modrinth_id }}
           name: ${{ format('{0} {1} - {2}', inputs.mod_name, inputs.version, matrix.name_suffix) }}
           version: ${{ inputs.version }}
-          changelog: ${{ github.event.release.body }}
+          changelog: ${{ inputs.changelog }}
           loaders: ${{ matrix.loader }}
           game-versions: ${{ inputs.modrinth_game_version }}
           files: output/${{ inputs.artifact_basename }}-${{ matrix.loader }}-${{ inputs.version }}.jar
