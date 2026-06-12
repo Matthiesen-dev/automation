@@ -1,0 +1,98 @@
+name: Simple Publishing Workflow
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: "The tag name to parse the version from."
+        required: true
+        type: string
+      artifact_basename:
+        description: "The base name for the release artifacts (without loader and version)."
+        required: true
+        type: string
+      mod_name:
+        description: "The name of the mod to publish."
+        required: true
+        type: string
+      changelog:
+        description: "The changelog to include in the Modrinth release."
+        required: true
+        type: string
+      fabric_loader_version:
+        description: "Fabric loader version for this release."
+        required: false
+        type: string
+      neoforge_loader_version:
+        description: "NeoForge loader version for this release."
+        required: false
+        type: string
+      modrinth_game_version:
+        description: "The game version to target on Modrinth."
+        required: true
+        type: string
+      modrinth_id:
+        description: "The Modrinth project ID to publish to."
+        required: true
+        type: string
+      modrinth_dependencies:
+        description: "The dependencies to set for the Modrinth release (in JSON format)."
+        required: false
+        type: string
+        default: "[]"
+      github_release_url:
+        description: "Optional GitHub release URL override."
+        required: false
+        type: string
+      discord_icon_url:
+        description: "Optional icon URL used as the embed thumbnail."
+        required: false
+        type: string
+    secrets:
+      git_token:
+        description: "GitHub token for authentication (automatically provided by GitHub)."
+        required: true
+      MODRINTH_TOKEN:
+        description: "The Modrinth API token to use for authentication."
+        required: true
+      DISCORD_WEBHOOK_URL:
+        description: "Discord webhook URL for release notifications."
+        required: true
+
+jobs:
+  prepare:
+    uses: matthiesen-dev/automation/.github/workflows/prepare-publishing.yml@main
+    with:
+      tag_name: ${{ inputs.tag_name }}
+    secrets:
+      git_token: ${{ secrets.git_token }}
+
+  publish_modrinth:
+    needs: prepare
+    uses: matthiesen-dev/automation/.github/workflows/publish-modrinth-multiloader.yml@main
+    with:
+      artifact_basename: ${{ inputs.artifact_basename }}
+      mod_name: ${{ inputs.mod_name }}
+      version: ${{ needs.prepare.outputs.version }}
+      changelog: ${{ inputs.changelog }}
+      modrinth_game_version: ${{ inputs.modrinth_game_version }}
+      modrinth_id: ${{ inputs.modrinth_id }}
+      modrinth_dependencies: ${{ inputs.modrinth_dependencies }}
+    secrets:
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+
+  notify_discord:
+    needs: [prepare, publish_modrinth]
+    uses: matthiesen-dev/automation/.github/workflows/publish-discord-release.yml@main
+    with:
+      mod_name: ${{ inputs.mod_name }}
+      version: ${{ needs.prepare.outputs.version }}
+      changelog: ${{ inputs.changelog }}
+      modrinth_game_version: ${{ inputs.modrinth_game_version }}
+      modrinth_id: ${{ inputs.modrinth_id }}
+      fabric_loader_version: ${{ inputs.fabric_loader_version }}
+      neoforge_loader_version: ${{ inputs.neoforge_loader_version }}
+      github_release_url: ${{ inputs.github_release_url }}
+      discord_icon_url: ${{ inputs.discord_icon_url }}
+    secrets:
+      discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
