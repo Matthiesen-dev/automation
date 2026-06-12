@@ -18,6 +18,10 @@ inputs:
     description: "The Java distribution to use for the release preparation."
     required: false
     default: "temurin"
+  token:
+    description: "The GitHub token to use for authentication when uploading artifacts."
+    required: true
+    default: ""
 
 runs:
   using: composite
@@ -58,4 +62,4 @@ runs:
       with:
         files: output/*.jar
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.token }}

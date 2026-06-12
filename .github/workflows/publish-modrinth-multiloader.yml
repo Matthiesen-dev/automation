@@ -1,0 +1,76 @@
+name: Publish Modrinth Multiloader Release
+
+on:
+  workflow_call:
+    inputs:
+      artifact_prefix:
+        description: "The prefix for the release artifacts."
+        required: false
+        type: string
+        default: "release-jars"
+
+      artifact_basename:
+        description: "The base name for the release artifacts (without loader and version)."
+        required: true
+        type: string
+
+      mod_name:
+        description: "The name of the mod to publish."
+        required: true
+        type: string
+      version:
+        description: "The version to publish."
+        required: true
+        type: string
+        default: ""
+
+      modrinth_game_version:
+        description: "The game version to target on Modrinth."
+        required: true
+        type: string
+      modrinth_dependencies:
+        description: "The dependencies to set for the Modrinth release (in JSON format)."
+        required: false
+        type: string
+        default: "[]"
+
+      modrinth_id:
+        description: "The Modrinth project ID to publish to."
+        required: true
+        type: string
+      modrinth_token:
+        description: "The Modrinth API token to use for authentication."
+        required: true
+        type: string
+
+jobs:
+  publish_modrinth:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - loader: "fabric"
+            name_suffix: "Fabric"
+          - loader: "neoforge"
+            name_suffix: "NeoForge"
+
+    steps:
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_prefix }}-${{ inputs.version }}
+          path: output
+
+      - name: Publish ${{ matrix.name_suffix }} to Modrinth
+        uses: cloudnode-pro/modrinth-publish@v2
+        with:
+          token: ${{ inputs.modrinth_token }}
+          project: ${{ inputs.modrinth_id }}
+          name: ${{ format('{0} {1} - {2}', inputs.mod_name, inputs.version, matrix.name_suffix) }}
+          version: ${{ inputs.version }}
+          changelog: ${{ github.event.release.body }}
+          loaders: ${{ matrix.loader }}
+          game-versions: ${{ inputs.modrinth_game_version }}
+          files: output/${{ inputs.artifact_basename }}-${{ matrix.loader }}-${{ inputs.version }}.jar
+          dependencies: ${{ inputs.modrinth_dependencies }}
