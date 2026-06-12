@@ -1,0 +1,42 @@
+name: Determine Dependencies
+description: "Determines the dependencies for the release based on the provided inputs and sets them as outputs for use in subsequent steps."
+
+inputs:
+  base_dependencies:
+    description: "The base dependencies to set for the Modrinth release (in JSON format)."
+    required: true
+    default: "[]"
+  extra_dependencies:
+    description: "Additional dependencies to include (in JSON format). These will be merged with the base dependencies."
+    required: false
+    default: "[]"
+
+outputs:
+  merged_dependencies:
+    description: "The merged dependencies in JSON format, combining base and extra dependencies."
+    value: ${{ steps.merge.outputs.merged_dependencies }}
+
+runs:
+  using: composite
+  steps:
+    - name: Merge Dependencies
+      id: merge
+      shell: bash
+      run: |
+        echo "Base dependencies: ${{ inputs.base_dependencies }}"
+        echo "Extra dependencies: ${{ inputs.extra_dependencies }}"
+
+        if [ -n "${{ inputs.extra_dependencies }}" ] && [ "${{ inputs.extra_dependencies }}" != "[]" ]; then
+          if [ -n "${{ inputs.base_dependencies }}" ] && [ "${{ inputs.base_dependencies }}" != "[]" ]; then
+            # Merge base and extra dependencies
+            merged=$(jq -s 'add | unique' <(echo '${{ inputs.base_dependencies }}') <(echo '${{ inputs.extra_dependencies }}'))
+          else
+            merged="${{ inputs.extra_dependencies }}"
+          fi
+        else
+          merged="${{ inputs.base_dependencies }}"
+        fi
+
+        # Set the merged dependencies as an output
+        echo "Merged dependencies: $merged"
+        echo "merged_dependencies=$merged" >> $GITHUB_OUTPUT
