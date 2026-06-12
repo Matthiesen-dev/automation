@@ -2,8 +2,6 @@
 
 Reusable GitHub Actions workflows and composite actions for release automation across Matthiesen-dev projects.
 
-Repository: https://github.com/Matthiesen-dev/automation
-
 ## Overview
 
 This repository provides shared automation resources for release pipelines:
