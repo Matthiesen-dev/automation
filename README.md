@@ -74,7 +74,7 @@ These resources are designed to be called from other repositories using workflow
 - Required secret:
   - MODRINTH_TOKEN
 
-4. .github/workflows/publish-discord-release.yml
+4. .github/workflows/notify-discord.yml
 
 - Purpose: Send a Discord webhook embed for a new release.
 - Trigger: workflow_call
