@@ -43,7 +43,7 @@ jobs:
 
   notify_discord:
     needs: [prepare, publish_modrinth]
-    uses: Matthiesen-dev/automation/.github/workflows/publish-discord-release.yml@main
+    uses: Matthiesen-dev/automation/.github/workflows/notify-discord.yml@main
     with:
       mod_name: My Mod
       version: ${{ needs.prepare.outputs.version }}
