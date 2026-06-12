@@ -1,0 +1,58 @@
+# Singleloader Release Example
+#
+# Use this pattern when your mod targets only one loader per release,
+# or when you want to publish each loader to a separate Modrinth project.
+# Set `loader` to the target loader (e.g. fabric, neoforge, quilt).
+#
+# Required repository secrets:
+#   MODRINTH_TOKEN       - Modrinth API token
+#   DISCORD_WEBHOOK_URL  - Discord incoming webhook URL
+
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  prepare:
+    uses: Matthiesen-dev/automation/.github/workflows/prepare-publishing.yml@main
+    with:
+      tag_name: ${{ github.event.release.tag_name }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish_modrinth:
+    needs: prepare
+    uses: Matthiesen-dev/automation/.github/workflows/publish-modrinth-singleloader.yml@main
+    with:
+      artifact_basename: my-mod
+      mod_name: My Mod
+      version: ${{ needs.prepare.outputs.version }}
+      changelog: ${{ github.event.release.body }}
+      loader: fabric
+      modrinth_game_version: "1.21.1"
+      modrinth_id: your-modrinth-project-id
+      # Optional overrides:
+      # artifact_prefix: release-jars
+      # modrinth_dependencies: '[{"project_id":"P7dR8mSH","dependency_type":"required"}]'
+      # modrinth_publish_files: output/custom-name-*.jar
+      # readme_path: README.md
+    secrets:
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+
+  notify_discord:
+    needs: [prepare, publish_modrinth]
+    uses: Matthiesen-dev/automation/.github/workflows/publish-discord-release.yml@main
+    with:
+      mod_name: My Mod
+      version: ${{ needs.prepare.outputs.version }}
+      changelog: ${{ github.event.release.body }}
+      modrinth_game_version: "1.21.1"
+      modrinth_id: your-modrinth-project-id
+      fabric_loader_version: "0.16.x"
+      # Optional overrides:
+      # discord_icon_url: https://example.com/icon.png
+      # webhook_username: My Release Bot
+    secrets:
+      discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}

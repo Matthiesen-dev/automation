@@ -8,8 +8,8 @@ Repository: https://github.com/Matthiesen-dev/automation
 
 This repository provides shared automation resources for release pipelines:
 
-- Reusable workflows for publishing Modrinth releases (singleloader and multiloader) and Discord notifications.
-- Composite actions for parsing release versions and preparing Gradle release artifacts.
+- Reusable workflows for preparing releases and publishing to Modrinth (singleloader and multiloader) and Discord.
+- Composite actions for parsing release versions, preparing Gradle release artifacts, and building Discord embed payloads.
 
 These resources are designed to be called from other repositories using workflow_call and local composite action references.
 
@@ -17,7 +17,19 @@ These resources are designed to be called from other repositories using workflow
 
 ### Reusable Workflows
 
-1. .github/workflows/publish-modrinth-multiloader.yml
+1. .github/workflows/prepare-publishing.yml
+
+- Purpose: Parse a release tag and build/upload Gradle release artifacts in a single reusable workflow step. Use this instead of calling parse-version and prepare-release actions individually.
+- Trigger: workflow_call
+- Outputs:
+  - version
+  - is_snapshot
+- Required inputs:
+  - tag_name
+- Required secret:
+  - GITHUB_TOKEN (automatically provided by GitHub)
+
+3. .github/workflows/publish-modrinth-multiloader.yml
 
 - Purpose: Publish Fabric and NeoForge jars to Modrinth, then sync the Modrinth project description from a README.
 - Trigger: workflow_call
@@ -64,12 +76,12 @@ These resources are designed to be called from other repositories using workflow
 - Required secret:
   - MODRINTH_TOKEN
 
-3. .github/workflows/publish-discord-release.yml
+4. .github/workflows/publish-discord-release.yml
 
 - Purpose: Send a Discord webhook embed for a new release.
 - Trigger: workflow_call
 - Key behavior:
-  - Builds a structured embed payload with release metadata.
+  - Delegates payload construction to the build-discord-payload composite action.
   - Includes loader/platform info, MC version, Modrinth link, and GitHub release link.
   - Posts payload to a Discord webhook URL.
 - Required inputs:
@@ -90,7 +102,25 @@ These resources are designed to be called from other repositories using workflow
 
 ### Composite Actions
 
-1. .github/actions/parse-version/action.yml
+1. .github/actions/build-discord-payload/action.yml
+
+- Purpose: Build a Discord webhook embed JSON payload for a release notification.
+- Inputs:
+  - mod_name (required)
+  - version (required)
+  - changelog
+  - modrinth_game_version
+  - modrinth_id
+  - fabric_loader_version
+  - neoforge_loader_version
+  - discord_icon_url
+  - github_release_url
+  - webhook_username (default: Matthiesen Release Bot)
+  - webhook_avatar_url
+- Output:
+  - payload
+
+2. .github/actions/parse-version/action.yml
 
 - Purpose: Parse a release version from a tag string.
 - Input:
@@ -104,7 +134,7 @@ These resources are designed to be called from other repositories using workflow
   - vX.Y.Z-SNAPSHOT
   - X.Y.Z-SNAPSHOT
 
-2. .github/actions/prepare-release/action.yml
+3. .github/actions/prepare-release/action.yml
 
 - Purpose: Build a Gradle project and publish release artifacts.
 - Inputs:
@@ -121,78 +151,20 @@ These resources are designed to be called from other repositories using workflow
   - Uploads output/*.jar as workflow artifacts.
   - Uploads output/*.jar to GitHub Release assets.
 
-## Example Usage
+## Examples
 
-From another repository, call these resources like this:
+Ready-to-copy release workflow examples live in the [examples/](examples/) folder:
 
-```yaml
-name: Release
+| Example                                                                | Description                                                                            |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [examples/multiloader-release.yml](examples/multiloader-release.yml)   | Publish Fabric and NeoForge jars to Modrinth in a single release, then notify Discord. |
+| [examples/singleloader-release.yml](examples/singleloader-release.yml) | Publish a single loader target to Modrinth, then notify Discord.                       |
 
-on:
-  release:
-    types: [published]
+All examples follow the same basic structure:
 
-jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.parse.outputs.version }}
-    steps:
-      - name: Parse version
-        id: parse
-        uses: Matthiesen-dev/automation/.github/actions/parse-version@main
-        with:
-          tag_name: ${{ github.event.release.tag_name }}
-
-      - name: Prepare release artifacts
-        uses: Matthiesen-dev/automation/.github/actions/prepare-release@main
-        with:
-          version: ${{ steps.parse.outputs.version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  publish_modrinth:
-    needs: prepare
-    uses: Matthiesen-dev/automation/.github/workflows/publish-modrinth-multiloader.yml@main
-    with:
-      artifact_basename: my-mod
-      mod_name: My Mod
-      version: ${{ needs.prepare.outputs.version }}
-      changelog: ${{ github.event.release.body }}
-      modrinth_game_version: "1.21.1"
-      modrinth_id: your-modrinth-project-id
-    secrets:
-      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-
-  publish_modrinth_singleloader:
-    needs: prepare
-    uses: Matthiesen-dev/automation/.github/workflows/publish-modrinth-singleloader.yml@main
-    with:
-      artifact_basename: my-mod
-      mod_name: My Mod
-      version: ${{ needs.prepare.outputs.version }}
-      changelog: ${{ github.event.release.body }}
-      loader: fabric
-      modrinth_game_version: "1.21.1"
-      modrinth_id: your-modrinth-project-id
-      # Optional: override file selection if your artifact naming differs
-      # modrinth_publish_files: output/custom-name-*.jar
-    secrets:
-      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-
-  notify_discord:
-    needs: prepare
-    uses: Matthiesen-dev/automation/.github/workflows/publish-discord-release.yml@main
-    with:
-      mod_name: My Mod
-      version: ${{ needs.prepare.outputs.version }}
-      changelog: ${{ github.event.release.body }}
-      modrinth_game_version: "1.21.1"
-      modrinth_id: your-modrinth-project-id
-      fabric_loader_version: "0.16.x"
-      neoforge_loader_version: "21.x"
-    secrets:
-      discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-```
+1. `prepare` — calls `prepare-publishing.yml` to parse the tag and build/upload artifacts.
+2. `publish_modrinth` — calls the appropriate Modrinth publish workflow.
+3. `notify_discord` — calls `publish-discord-release.yml` after publishing completes.
 
 ## Notes
 
