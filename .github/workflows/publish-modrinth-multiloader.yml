@@ -3,10 +3,6 @@ name: Publish Modrinth Multiloader Release
 on:
   workflow_call:
     inputs:
-      artifact_prefix:
-        description: "The prefix for the release artifacts."
-        required: true
-        type: string
       artifact_basename:
         description: "The base name for the release artifacts (without loader and version)."
         required: true
@@ -33,6 +29,11 @@ on:
         required: true
         type: string
 
+      artifact_prefix:
+        description: "The prefix for the release artifacts."
+        required: false
+        type: string
+        default: "release-jars"
       modrinth_dependencies:
         description: "The dependencies to set for the Modrinth release (in JSON format)."
         required: false
