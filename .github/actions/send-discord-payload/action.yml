@@ -1,0 +1,24 @@
+name: Send Discord Payload
+description: Sends a release notification to a Discord channel via webhook.
+
+inputs:
+  payload:
+    description: "The JSON payload to send to the Discord webhook."
+    required: true
+  discord_webhook_url:
+    description: "Discord webhook URL."
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Send Discord Payload
+      shell: bash
+      env:
+        PAYLOAD: ${{ inputs.payload }}
+        DISCORD_WEBHOOK_URL: ${{ inputs.discord_webhook_url }}
+      run: |
+        curl -X POST \
+          -H "Content-Type: application/json" \
+          --data-raw "$PAYLOAD" \
+          "$DISCORD_WEBHOOK_URL"
