@@ -1,0 +1,45 @@
+name: CI Artifact Workflow
+
+on:
+  workflow_call:
+    inputs:
+      java_version:
+        description: "The Java version to use for the build."
+        required: false
+        default: "21"
+        type: string
+      java_distribution:
+        description: "The Java distribution to use for the build (e.g., 'temurin', 'zulu')."
+        required: false
+        default: "temurin"
+        type: string
+      artifact_name:
+        description: "The name to use for the uploaded artifact."
+        required: false
+        default: "build-artifacts"
+        type: string
+      upload_directory:
+        description: "The directory to upload as an artifact (relative to the repository root)."
+        required: false
+        default: "output"
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Project Setup
+        uses: matthiesen-dev/automation/.github/actions/java-project-setup@main
+        with:
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
+
+      - name: Build Project and Prepare Artifacts
+        shell: bash
+        run: ./gradlew build copyJars
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.upload_directory }}
