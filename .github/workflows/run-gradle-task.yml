@@ -17,6 +17,11 @@ on:
         description: "The Gradle task to run (e.g., 'build', 'test')."
         required: true
         type: string
+      env_key_value_pairs:
+        description: "Optional environment variables to set when running the Gradle task, in the format 'KEY=VALUE', separated by commas."
+        required: false
+        type: string
+        default: ""
 
 jobs:
   run_task:
@@ -27,6 +32,16 @@ jobs:
         with:
           java_version: ${{ inputs.java_version }}
           java_distribution: ${{ inputs.java_distribution }}
+
+      - name: Set Environment Variables
+        if: ${{ inputs.env_key_value_pairs != '' }}
+        run: |
+          echo "Setting environment variables..."
+          IFS=',' read -ra KV_PAIRS <<< "${{ inputs.env_key_value_pairs }}"
+          for KV in "${KV_PAIRS[@]}"; do
+            echo "Setting $KV"
+            echo "$KV" >> $GITHUB_ENV
+          done
 
       - name: Run Gradle Task
         shell: bash
