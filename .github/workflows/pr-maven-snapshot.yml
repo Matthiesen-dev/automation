@@ -1,0 +1,56 @@
+name: PR Maven Snapshot
+
+on:
+  workflow_call:
+    inputs:
+      java_version:
+        description: "The Java version to use for the snapshot publishing."
+        required: false
+        type: string
+        default: "21"
+      java_distribution:
+        description: "The Java distribution to use for the snapshot publishing."
+        required: false
+        type: string
+        default: "temurin"
+      pr_number:
+        description: "The pull request number to publish the snapshot for."
+        required: true
+        type: string
+    secrets:
+      maven_username:
+        description: "The Maven username for authenticating with the repository (sourced from secrets)."
+        required: true
+      maven_password:
+        description: "The Maven password for authenticating with the repository (sourced from secrets)."
+        required: true
+
+jobs:
+  generate_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parsed_version.outputs.version }}
+    steps:
+      # Format `PR-1234-SNAPSHOT` where `1234` is the PR number
+      - name: Generate version for PR snapshot
+        id: parsed_version
+        run: |
+          echo "version=PR-${{ inputs.pr_number }}-SNAPSHOT" >> $GITHUB_OUTPUT
+
+  publish_snapshot:
+    runs-on: ubuntu-latest
+    needs: generate_version
+    env:
+      RELEASE_VERSION: ${{ needs.generate_version.outputs.version }}
+    steps:
+      - name: Project Setup
+        uses: matthiesen-dev/automation/.github/actions/java-project-setup@main
+        with:
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
+
+      - name: Build with Gradle and Publish to DevMatthiesenMavenRepository
+        run: ./gradlew build publishAllPublicationsToDevMatthiesenMavenRepository
+        env:
+          ORG_GRADLE_PROJECT_devMatthiesenMavenUsername: ${{ secrets.maven_username }}
+          ORG_GRADLE_PROJECT_devMatthiesenMavenPassword: ${{ secrets.maven_password }}
