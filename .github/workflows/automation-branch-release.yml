@@ -1,0 +1,55 @@
+name: Automation Branch Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: Branch name to create and pin automation references to
+        required: true
+        type: string
+      base_branch:
+        description: Base branch to branch from
+        required: false
+        default: main
+        type: string
+      commit_message:
+        description: Commit message for updated references
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare release branch
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+          BASE_BRANCH: ${{ inputs.base_branch }}
+          COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        run: |
+          set -euo pipefail
+
+          EXTRA_ARGS=()
+          if [[ -n "$COMMIT_MESSAGE" ]]; then
+            EXTRA_ARGS+=(--commit-message "$COMMIT_MESSAGE")
+          fi
+
+          bash scripts/prepare-release.sh \
+            --branch "$BRANCH_NAME" \
+            --base "$BASE_BRANCH" \
+            "${EXTRA_ARGS[@]}"
