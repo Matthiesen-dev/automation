@@ -22,6 +22,7 @@ All reusable workflows are called from other repositories using `uses: matthiese
 
 2. `.github/workflows/prepare-publishing-maven.yml`
 - Same as `prepare-publishing.yml`, plus publishes Maven artifacts to `maven.matthiesen.dev`.
+- Intended only for projects publishing to `maven.matthiesen.dev`.
 - Required secrets: `git_token`, `maven_username`, `maven_password`.
 
 ### Modrinth Publishing
@@ -55,6 +56,7 @@ All reusable workflows are called from other repositories using `uses: matthiese
 7. `.github/workflows/simple-publish-with-maven.yml`
 - Same end-to-end wrapper as `simple-publish.yml`, but uses Maven publishing during prepare.
 - Internally calls: `prepare-publishing-maven.yml`, `publish-modrinth-multiloader.yml`, `notify-discord.yml`.
+- Intended only for projects publishing to `maven.matthiesen.dev`.
 - Skips publish/notify automatically for snapshot versions.
 
 ### Utility Workflows
@@ -70,14 +72,14 @@ All reusable workflows are called from other repositories using `uses: matthiese
 
 ## Which Workflow Should I Use?
 
-| Goal                                                                | Recommended Workflow                                                       | Why                                                                         |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Fully custom pipeline stages (explicit prepare/publish/notify jobs) | `prepare-publishing.yml` + `publish-modrinth-*.yml` + `notify-discord.yml` | Maximum control over job dependencies, conditions, and per-stage overrides. |
-| One-call Gradle release pipeline                                    | `simple-publish.yml`                                                       | Fastest setup for multiloader Modrinth + Discord with snapshot auto-skip.   |
-| One-call Gradle + Maven pipeline                                    | `simple-publish-with-maven.yml`                                            | Same convenience as simple publish, plus Maven deployment during prepare.   |
-| Single loader Modrinth release                                      | `publish-modrinth-singleloader.yml`                                        | Lets you target one loader or separate projects per loader.                 |
-| Build artifact only (CI / PR checks)                                | `ci-artifact.yml`                                                          | Produces and uploads build artifacts without release publishing.            |
-| Prepare automation reference branch in this repo                    | `automation-branch-release.yml`                                            | Creates a branch and rewrites automation refs to that branch.               |
+| Goal                                                                | Recommended Workflow                                                       | Why                                                                                               |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Fully custom pipeline stages (explicit prepare/publish/notify jobs) | `prepare-publishing.yml` + `publish-modrinth-*.yml` + `notify-discord.yml` | Maximum control over job dependencies, conditions, and per-stage overrides.                       |
+| One-call Gradle release pipeline                                    | `simple-publish.yml`                                                       | Fastest setup for multiloader Modrinth + Discord with snapshot auto-skip.                         |
+| One-call Gradle + Maven pipeline                                    | `simple-publish-with-maven.yml`                                            | Same convenience as simple publish, plus Maven deployment to maven.matthiesen.dev during prepare. |
+| Single loader Modrinth release                                      | `publish-modrinth-singleloader.yml`                                        | Lets you target one loader or separate projects per loader.                                       |
+| Build artifact only (CI / PR checks)                                | `ci-artifact.yml`                                                          | Produces and uploads build artifacts without release publishing.                                  |
+| Prepare automation reference branch in this repo                    | `automation-branch-release.yml`                                            | Creates a branch and rewrites automation refs to that branch.                                     |
 
 ## Composite Actions
 
@@ -98,6 +100,7 @@ All reusable workflows are called from other repositories using `uses: matthiese
 
 5. `.github/actions/prepare-release-with-maven/action.yml`
 - Same as `prepare-release`, with additional Maven publishing step.
+- Intended only for publishing to `maven.matthiesen.dev`.
 
 6. `.github/actions/determine-dependencies/action.yml`
 - Merges base and extra Modrinth dependency JSON arrays.
