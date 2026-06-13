@@ -21,14 +21,14 @@ on:
         description: "The version to set as an environment variable when running the Gradle task."
         required: true
         type: string
+
+    secrets:
       maven_username:
         description: "The Maven username to set as an environment variable when running the Gradle task (sourced from secrets)."
         required: true
-        type: string
       maven_password:
         description: "The Maven password to set as an environment variable when running the Gradle task (sourced from secrets)."
         required: true
-        type: string
 
 jobs:
   run_task:
@@ -45,5 +45,5 @@ jobs:
         run: ./gradlew :${{ inputs.project_name }}:publishAllPublicationsToDevMatthiesenMavenRepository
         env:
           VERSION: ${{ inputs.version }}
-          ORG_GRADLE_PROJECT_devMatthiesenMavenUsername: ${{ inputs.maven_username }}
-          ORG_GRADLE_PROJECT_devMatthiesenMavenPassword: ${{ inputs.maven_password }}
+          ORG_GRADLE_PROJECT_devMatthiesenMavenUsername: ${{ secrets.maven_username }}
+          ORG_GRADLE_PROJECT_devMatthiesenMavenPassword: ${{ secrets.maven_password }}
