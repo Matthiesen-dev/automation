@@ -1,4 +1,4 @@
-name: Maven and Modrinth Publishing Workflow
+name: Simple Publishing Workflow with Maven Publishing (maven.matthiesen.dev repository)
 
 on:
   workflow_call:
