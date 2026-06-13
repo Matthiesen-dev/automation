@@ -1,0 +1,59 @@
+name: Prepare Publishing with Maven Publishing (maven.matthiesen.dev repository)
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: "The tag name to parse the version from."
+        required: true
+        type: string
+      java_version:
+        description: "The Java version to use for the release preparation."
+        required: false
+        type: string
+        default: "21"
+      java_distribution:
+        description: "The Java distribution to use for the release preparation."
+        required: false
+        type: string
+        default: "temurin"
+    secrets:
+      git_token:
+        description: "GitHub token for authentication (automatically provided by GitHub)."
+        required: true
+      maven_username:
+        description: "The username for authenticating with the maven.matthiesen.dev repository."
+        required: true
+      maven_password:
+        description: "The password for authenticating with the maven.matthiesen.dev repository."
+        required: true
+    outputs:
+      version:
+        description: "The parsed version from the tag name."
+        value: ${{ jobs.parse.outputs.version }}
+      is_snapshot:
+        description: "Indicates if the version is a snapshot version."
+        value: ${{ jobs.parse.outputs.is_snapshot }}
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse_version.outputs.version }}
+      is_snapshot: ${{ steps.parse_version.outputs.is_snapshot }}
+    steps:
+      - name: Parse Version
+        id: parse_version
+        uses: matthiesen-dev/automation/.github/actions/parse-version@main
+        with:
+          tag_name: ${{ inputs.tag_name }}
+
+      - name: Prepare release artifacts
+        uses: matthiesen-dev/automation/.github/actions/prepare-release-with-maven@main
+        with:
+          version: ${{ steps.parse_version.outputs.version }}
+          token: ${{ secrets.git_token }}
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
+          maven_username: ${{ secrets.maven_username }}
+          maven_password: ${{ secrets.maven_password }}
