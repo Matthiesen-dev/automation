@@ -1,0 +1,49 @@
+name: Run Gradle Task (Matthiesen-dev/libs)
+
+on:
+  workflow_call:
+    inputs:
+      java_version:
+        description: "The Java version to use for the task."
+        required: false
+        default: "21"
+        type: string
+      java_distribution:
+        description: "The Java distribution to use for the task (e.g., 'temurin', 'zulu')."
+        required: false
+        default: "temurin"
+        type: string
+      project_name:
+        description: "The Gradle project name to run (e.g., 'build', 'test')."
+        required: true
+        type: string
+      version:
+        description: "The version to set as an environment variable when running the Gradle task."
+        required: true
+        type: string
+      maven_username:
+        description: "The Maven username to set as an environment variable when running the Gradle task (sourced from secrets)."
+        required: true
+        type: string
+      maven_password:
+        description: "The Maven password to set as an environment variable when running the Gradle task (sourced from secrets)."
+        required: true
+        type: string
+
+jobs:
+  run_task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Project Setup
+        uses: matthiesen-dev/automation/.github/actions/java-project-setup@main
+        with:
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
+
+      - name: Run Gradle Task
+        shell: bash
+        run: ./gradlew :${{ inputs.project_name }}:publishAllPublicationsToDevMatthiesenMavenRepository
+        env:
+          VERSION: ${{ inputs.version }}
+          ORG_GRADLE_PROJECT_devMatthiesenMavenUsername: ${{ inputs.maven_username }}
+          ORG_GRADLE_PROJECT_devMatthiesenMavenPassword: ${{ inputs.maven_password }}
