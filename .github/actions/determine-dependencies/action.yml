@@ -37,6 +37,13 @@ runs:
           merged="${{ inputs.base_dependencies }}"
         fi
 
+        # Ensure output is a single line. Prefer compact JSON when valid.
+        if merged_compact=$(echo "$merged" | jq -c . 2>/dev/null); then
+          merged="$merged_compact"
+        else
+          merged=$(echo "$merged" | tr '\r\n' ' ' | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')
+        fi
+
         # Set the merged dependencies as an output
         echo "Merged dependencies: $merged"
-        echo "merged_dependencies=$merged" >> $GITHUB_OUTPUT
+        echo "merged_dependencies=$merged" >> "$GITHUB_OUTPUT"
