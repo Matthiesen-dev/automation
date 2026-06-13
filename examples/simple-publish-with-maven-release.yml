@@ -1,0 +1,49 @@
+# Simple Publish Release Example with Maven publishing (wrapper workflow)
+#
+# Use this when your release should also publish Maven artifacts to
+# maven.matthiesen.dev during the prepare step, while still handling
+# Modrinth + Discord in one reusable workflow call.
+#
+# Snapshot tags (e.g. 1.2.3-SNAPSHOT) are prepared but skipped for publish/notify
+# by the wrapper workflow itself.
+#
+# Required repository secrets:
+#   MODRINTH_TOKEN       - Modrinth API token
+#   DISCORD_WEBHOOK_URL  - Discord incoming webhook URL
+#   MAVEN_USERNAME       - Username for maven.matthiesen.dev
+#   MAVEN_PASSWORD       - Password for maven.matthiesen.dev
+
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    uses: matthiesen-dev/automation/.github/workflows/simple-publish-with-maven.yml@main
+    with:
+      tag_name: ${{ github.event.release.tag_name }}
+      artifact_basename: my-mod
+      mod_name: My Mod
+      changelog: ${{ github.event.release.body }}
+      modrinth_game_version: "1.21.1"
+      modrinth_id: your-modrinth-project-id
+
+      # Optional overrides:
+      # fabric_loader_version: "0.16.x"
+      # neoforge_loader_version: "21.x"
+      # modrinth_dependencies: '[{"project_id":"P7dR8mSH","dependency_type":"required"}]'
+      # modrinth_fabric_dependencies: '[{"project_id":"fabric-api","dependency_type":"required"}]'
+      # modrinth_neoforge_dependencies: '[]'
+      # github_release_url: https://github.com/<owner>/<repo>/releases/tag/<tag>
+      # discord_icon_url: https://example.com/icon.png
+      # copy_file_outdir: output
+      # java_version: "21"
+      # java_distribution: temurin
+    secrets:
+      git_token: ${{ secrets.GITHUB_TOKEN }}
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      maven_username: ${{ secrets.MAVEN_USERNAME }}
+      maven_password: ${{ secrets.MAVEN_PASSWORD }}

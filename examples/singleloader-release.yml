@@ -7,6 +7,10 @@
 # Required repository secrets:
 #   MODRINTH_TOKEN       - Modrinth API token
 #   DISCORD_WEBHOOK_URL  - Discord incoming webhook URL
+#
+# Note:
+#   This explicit 3-job pattern gives full control over each stage.
+#   If you prefer an all-in-one wrapper, use simple-publish workflows instead.
 
 name: Release
 
@@ -16,15 +20,18 @@ on:
 
 jobs:
   prepare:
-    uses: Matthiesen-dev/automation/.github/workflows/prepare-publishing.yml@main
+    uses: matthiesen-dev/automation/.github/workflows/prepare-publishing.yml@main
     with:
       tag_name: ${{ github.event.release.tag_name }}
+      # Optional:
+      # java_version: "21"
+      # java_distribution: temurin
     secrets:
       git_token: ${{ secrets.GITHUB_TOKEN }}
 
   publish_modrinth:
     needs: prepare
-    uses: Matthiesen-dev/automation/.github/workflows/publish-modrinth-singleloader.yml@main
+    uses: matthiesen-dev/automation/.github/workflows/publish-modrinth-singleloader.yml@main
     with:
       artifact_basename: my-mod
       mod_name: My Mod
@@ -43,7 +50,7 @@ jobs:
 
   notify_discord:
     needs: [prepare, publish_modrinth]
-    uses: Matthiesen-dev/automation/.github/workflows/notify-discord.yml@main
+    uses: matthiesen-dev/automation/.github/workflows/notify-discord.yml@main
     with:
       mod_name: My Mod
       version: ${{ needs.prepare.outputs.version }}

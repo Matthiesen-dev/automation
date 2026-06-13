@@ -1,186 +1,145 @@
-# Matthiesen-dev Automation Repository
+# matthiesen-dev/automation
 
 Reusable GitHub Actions workflows and composite actions for release automation across Matthiesen-dev projects.
 
-## Overview
+## Repository Structure
 
-This repository provides shared automation resources for release pipelines:
+- `.github/workflows/`: reusable workflows and utility workflows.
+- `.github/actions/`: reusable composite actions.
+- `examples/`: ready-to-copy release workflow examples for consuming repos.
+- `scripts/prepare-release.sh`: local helper for creating a release branch and pinning automation references to that branch.
 
-- Reusable workflows for preparing releases and publishing to Modrinth (singleloader and multiloader) and Discord.
-- Composite actions for parsing release versions, preparing Gradle release artifacts, and building Discord embed payloads.
+## Reusable Workflows
 
-These resources are designed to be called from other repositories using workflow_call and local composite action references.
+All reusable workflows are called from other repositories using `uses: matthiesen-dev/automation/.github/workflows/<file>@<ref>`.
 
-## Resources
+### Core Release Building
 
-### Reusable Workflows
+1. `.github/workflows/prepare-publishing.yml`
+- Parses a tag (`tag_name`) into `version` and `is_snapshot`.
+- Builds release artifacts and uploads them as workflow artifacts and GitHub release assets.
+- Required secret: `git_token`.
 
-1. .github/workflows/prepare-publishing.yml
+2. `.github/workflows/prepare-publishing-maven.yml`
+- Same as `prepare-publishing.yml`, plus publishes Maven artifacts to `maven.matthiesen.dev`.
+- Required secrets: `git_token`, `maven_username`, `maven_password`.
 
-- Purpose: Parse a release tag and build/upload Gradle release artifacts in a single reusable workflow step. Use this instead of calling parse-version and prepare-release actions individually.
-- Trigger: workflow_call
-- Outputs:
-  - version
-  - is_snapshot
-- Required inputs:
-  - tag_name
-- Required secret:
-  - GITHUB_TOKEN (automatically provided by GitHub)
+### Modrinth Publishing
 
-2. .github/workflows/publish-modrinth-multiloader.yml
+3. `.github/workflows/publish-modrinth-singleloader.yml`
+- Publishes one loader target (for example `fabric` or `neoforge`) to Modrinth.
+- Supports overriding publish files through `modrinth_publish_files`, with automatic fallback to `output/<artifact_basename>-<loader>-<version>.jar`.
+- Syncs Modrinth description from a README file.
+- Required secret: `MODRINTH_TOKEN`.
 
-- Purpose: Publish Fabric and NeoForge jars to Modrinth, then sync the Modrinth project description from a README.
-- Trigger: workflow_call
-- Key behavior:
-  - Downloads previously uploaded release artifacts.
-  - Publishes two variants via matrix (fabric, neoforge).
-  - Syncs Modrinth description using the configured README path.
-- Required inputs:
-  - artifact_basename
-  - mod_name
-  - version
-  - changelog
-  - modrinth_game_version
-  - modrinth_id
-- Optional inputs:
-  - artifact_prefix (default: release-jars)
-  - modrinth_dependencies (default: [])
-  - readme_path (default: README.md)
-- Required secret:
-  - MODRINTH_TOKEN
+4. `.github/workflows/publish-modrinth-multiloader.yml`
+- Publishes both Fabric and NeoForge jars through a matrix job.
+- Supports base dependencies plus loader-specific dependency overrides.
+- Syncs Modrinth description from a README file.
+- Required secret: `MODRINTH_TOKEN`.
 
-3. .github/workflows/publish-modrinth-singleloader.yml
+### Notifications
 
-- Purpose: Publish a single loader target (for example Fabric or NeoForge) to Modrinth, then sync the Modrinth project description from a README.
-- Trigger: workflow_call
-- Key behavior:
-  - Downloads previously uploaded release artifacts.
-  - Publishes one loader selected by input.
-  - Delegates file selection to the optional-input-with-fallback action (uses modrinth_publish_files if provided, otherwise derives the path from artifact_basename, loader, and version).
-  - Syncs Modrinth description using the configured README path.
-- Required inputs:
-  - artifact_basename
-  - mod_name
-  - version
-  - changelog
-  - loader
-  - modrinth_game_version
-  - modrinth_id
-- Optional inputs:
-  - artifact_prefix (default: release-jars)
-  - modrinth_dependencies (default: [])
-  - readme_path (default: README.md)
-  - modrinth_publish_files (default behavior publishes output/<artifact_basename>-<loader>-<version>.jar)
-- Required secret:
-  - MODRINTH_TOKEN
+5. `.github/workflows/notify-discord.yml`
+- Builds a Discord embed payload and posts it to a webhook.
+- Includes changelog, loader versions, MC version, Modrinth link, and GitHub release link.
+- Required secret: `discord_webhook_url`.
 
-4. .github/workflows/notify-discord.yml
+### End-to-End Wrappers
 
-- Purpose: Send a Discord webhook embed for a new release.
-- Trigger: workflow_call
-- Key behavior:
-  - Delegates payload construction to the build-discord-payload composite action.
-  - Includes loader/platform info, MC version, Modrinth link, and GitHub release link.
-  - Posts payload to a Discord webhook URL.
-- Required inputs:
-  - mod_name
-  - version
-- Optional inputs:
-  - changelog
-  - modrinth_game_version
-  - modrinth_id
-  - fabric_loader_version
-  - neoforge_loader_version
-  - discord_icon_url
-  - github_release_url
-  - webhook_username
-  - webhook_avatar_url
-- Required secret:
-  - discord_webhook_url
+6. `.github/workflows/simple-publish.yml`
+- End-to-end workflow wrapper for Gradle build + Modrinth multiloader publish + Discord notify.
+- Internally calls: `prepare-publishing.yml`, `publish-modrinth-multiloader.yml`, `notify-discord.yml`.
+- Skips publish/notify automatically for snapshot versions.
 
-### Composite Actions
+7. `.github/workflows/simple-publish-with-maven.yml`
+- Same end-to-end wrapper as `simple-publish.yml`, but uses Maven publishing during prepare.
+- Internally calls: `prepare-publishing-maven.yml`, `publish-modrinth-multiloader.yml`, `notify-discord.yml`.
+- Skips publish/notify automatically for snapshot versions.
 
-1. .github/actions/build-discord-payload/action.yml
+### Utility Workflows
 
-- Purpose: Build a Discord webhook embed JSON payload for a release notification.
-- Inputs:
-  - mod_name (required)
-  - version (required)
-  - changelog
-  - modrinth_game_version
-  - modrinth_id
-  - fabric_loader_version
-  - neoforge_loader_version
-  - discord_icon_url
-  - github_release_url
-  - webhook_username (default: Matthiesen Release Bot)
-  - webhook_avatar_url
-- Output:
-  - payload
+8. `.github/workflows/ci-artifact.yml`
+- CI helper workflow that builds with Gradle (`build copyJars`) and uploads the output as an artifact.
+- Useful for pull-request build validation and artifact inspection.
 
-2. .github/actions/parse-version/action.yml
+9. `.github/workflows/automation-branch-release.yml`
+- Manual (`workflow_dispatch`) utility for this repository.
+- Creates a branch and rewrites references like `matthiesen-dev/automation/.github/...@<ref>` to your branch ref.
+- Uses `scripts/prepare-release.sh` internally.
 
-- Purpose: Parse a release version from a tag string.
-- Input:
-  - tag_name
-- Outputs:
-  - version
-  - is_snapshot
-- Expected tag format:
-  - vX.Y.Z
-  - X.Y.Z
-  - vX.Y.Z-SNAPSHOT
-  - X.Y.Z-SNAPSHOT
+## Which Workflow Should I Use?
 
-3. .github/actions/prepare-release/action.yml
+| Goal                                                                | Recommended Workflow                                                       | Why                                                                         |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Fully custom pipeline stages (explicit prepare/publish/notify jobs) | `prepare-publishing.yml` + `publish-modrinth-*.yml` + `notify-discord.yml` | Maximum control over job dependencies, conditions, and per-stage overrides. |
+| One-call Gradle release pipeline                                    | `simple-publish.yml`                                                       | Fastest setup for multiloader Modrinth + Discord with snapshot auto-skip.   |
+| One-call Gradle + Maven pipeline                                    | `simple-publish-with-maven.yml`                                            | Same convenience as simple publish, plus Maven deployment during prepare.   |
+| Single loader Modrinth release                                      | `publish-modrinth-singleloader.yml`                                        | Lets you target one loader or separate projects per loader.                 |
+| Build artifact only (CI / PR checks)                                | `ci-artifact.yml`                                                          | Produces and uploads build artifacts without release publishing.            |
+| Prepare automation reference branch in this repo                    | `automation-branch-release.yml`                                            | Creates a branch and rewrites automation refs to that branch.               |
 
-- Purpose: Build a Gradle project and publish release artifacts.
-- Inputs:
-  - version (required)
-  - token (required)
-  - artifact_prefix (default: release-jars)
-  - java_version (default: 21)
-  - java_distribution (default: temurin)
-- Key behavior:
-  - Checks out repository and tags.
-  - Sets up Java and Gradle.
-  - Runs ./gradlew build with RELEASE_VERSION.
-  - Runs ./gradlew copyJars.
-  - Uploads output/*.jar as workflow artifacts.
-  - Uploads output/*.jar to GitHub Release assets.
+## Composite Actions
 
-4. .github/actions/optional-input-with-fallback/action.yml
+1. `.github/actions/java-project-setup/action.yml`
+- Checkout + Java setup + Gradle setup + `gradlew` executable permissions.
 
-- Purpose: Return an optional input value if provided, otherwise return a required fallback value. Used internally by publish-modrinth-singleloader to resolve the publish file path.
-- Inputs:
-  - optional_input (optional)
-  - fallback_input (required)
-- Output:
-  - result
+2. `.github/actions/parse-version/action.yml`
+- Parses tag names like `vX.Y.Z` or `X.Y.Z-SNAPSHOT`.
+- Outputs `version` and `is_snapshot`.
 
-5. .github/actions/send-discord-payload/action.yml
+3. `.github/actions/copy-upload-release-assets/action.yml`
+- Runs `./gradlew copyJars`.
+- Uploads release artifacts and attaches them to GitHub Releases.
 
-- Purpose: Send a prepared Discord webhook JSON payload to a Discord webhook URL.
-- Inputs:
-  - payload (required)
-  - discord_webhook_url (required)
+4. `.github/actions/prepare-release/action.yml`
+- Full Gradle release preparation flow.
+- Uses `java-project-setup` + `copy-upload-release-assets`.
+
+5. `.github/actions/prepare-release-with-maven/action.yml`
+- Same as `prepare-release`, with additional Maven publishing step.
+
+6. `.github/actions/determine-dependencies/action.yml`
+- Merges base and extra Modrinth dependency JSON arrays.
+- Outputs `merged_dependencies`.
+
+7. `.github/actions/optional-input-with-fallback/action.yml`
+- Returns optional input if provided, otherwise required fallback input.
+
+8. `.github/actions/build-discord-payload/action.yml`
+- Builds a Discord webhook JSON payload for release announcements.
+- Output: `payload`.
+
+9. `.github/actions/send-discord-payload/action.yml`
+- Sends a prebuilt Discord JSON payload to a webhook URL.
 
 ## Examples
 
-Ready-to-copy release workflow examples live in the [examples/](examples/) folder:
+Ready-to-copy examples are in `examples/`:
 
-| Example                                                                | Description                                                                            |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [examples/multiloader-release.yml](examples/multiloader-release.yml)   | Publish Fabric and NeoForge jars to Modrinth in a single release, then notify Discord. |
-| [examples/singleloader-release.yml](examples/singleloader-release.yml) | Publish a single loader target to Modrinth, then notify Discord.                       |
+| Example                                                                                          | Description                                                                       |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| [examples/multiloader-release.yml](examples/multiloader-release.yml)                             | Explicit 3-job flow: prepare + multiloader Modrinth publish + Discord notify.     |
+| [examples/singleloader-release.yml](examples/singleloader-release.yml)                           | Explicit 3-job flow: prepare + singleloader Modrinth publish + Discord notify.    |
+| [examples/simple-publish-release.yml](examples/simple-publish-release.yml)                       | Single wrapper job calling `simple-publish.yml` (Gradle build flow).              |
+| [examples/simple-publish-with-maven-release.yml](examples/simple-publish-with-maven-release.yml) | Single wrapper job calling `simple-publish-with-maven.yml` (Gradle + Maven flow). |
 
-All examples follow the same basic structure:
+All examples are triggered on published GitHub releases and pass through the release tag and changelog from the release event.
 
-1. `prepare` — calls `prepare-publishing.yml` to parse the tag and build/upload artifacts.
-2. `publish_modrinth` — calls the appropriate Modrinth publish workflow.
-3. `notify_discord` — calls `publish-discord-release.yml` after publishing completes.
+## Release Branch Helper Script
+
+Use `scripts/prepare-release.sh` to create a branch and repoint automation references in YAML files:
+
+```bash
+bash scripts/prepare-release.sh --branch release/next --base main
+```
+
+Optional flags:
+
+- `--commit-message <message>`
+- `--no-push`
 
 ## Notes
 
-- If you pin to @main, updates in this repository will be picked up automatically.
-- For stronger stability, pin to a tag or commit SHA in consuming repositories.
+- Pinning to `@main` picks up automation updates immediately.
+- For reproducible pipelines, pin to a tag or commit SHA.
