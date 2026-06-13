@@ -1,0 +1,33 @@
+name: Run Gradle Task
+
+on:
+  workflow_call:
+    inputs:
+      java_version:
+        description: "The Java version to use for the task."
+        required: false
+        default: "21"
+        type: string
+      java_distribution:
+        description: "The Java distribution to use for the task (e.g., 'temurin', 'zulu')."
+        required: false
+        default: "temurin"
+        type: string
+      gradle_task:
+        description: "The Gradle task to run (e.g., 'build', 'test')."
+        required: true
+        type: string
+
+jobs:
+  run_task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Project Setup
+        uses: matthiesen-dev/automation/.github/actions/java-project-setup@main
+        with:
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
+
+      - name: Run Gradle Task
+        shell: bash
+        run: ./gradlew ${{ inputs.gradle_task }}
