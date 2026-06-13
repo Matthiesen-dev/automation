@@ -34,9 +34,13 @@ jobs:
           java_version: ${{ inputs.java_version }}
           java_distribution: ${{ inputs.java_distribution }}
 
-      - name: Build Project and Prepare Artifacts
+      - name: Build Project
         shell: bash
-        run: ./gradlew build copyJars
+        run: ./gradlew build
+
+      - name: Copy JARs
+        shell: bash
+        run: ./gradlew copyJars
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v7
