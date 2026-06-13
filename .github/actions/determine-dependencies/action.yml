@@ -23,25 +23,55 @@ runs:
       id: merge
       shell: bash
       run: |
+        set -euo pipefail
+
+        normalize_dependencies() {
+          local raw="$1"
+          local compact
+          local sanitized
+
+          # Empty input should behave as an empty dependency list.
+          if [ -z "$raw" ]; then
+            echo "[]"
+            return 0
+          fi
+
+          # First, try strict JSON.
+          if compact=$(echo "$raw" | jq -c . 2>/dev/null); then
+            echo "$compact"
+            return 0
+          fi
+
+          # Fallback: accept relaxed object notation such as:
+          # [{project_id:MdwFAVRL,dependency_type:required}]
+          sanitized=$(echo "$raw" | tr -d '\r')
+          sanitized=$(echo "$sanitized" | sed -E 's/([{,][[:space:]]*)([A-Za-z_][A-Za-z0-9_-]*)([[:space:]]*:)/\1"\2"\3/g')
+          sanitized=$(echo "$sanitized" | sed -E 's/:[[:space:]]*([A-Za-z_][A-Za-z0-9_.-]*)([[:space:]]*[,}])/ :"\1"\2/g')
+
+          if compact=$(echo "$sanitized" | jq -c . 2>/dev/null); then
+            echo "$compact"
+            return 0
+          fi
+
+          echo "Invalid dependency JSON input: $raw" >&2
+          return 1
+        }
+
         echo "Base dependencies: ${{ inputs.base_dependencies }}"
         echo "Extra dependencies: ${{ inputs.extra_dependencies }}"
 
-        if [ -n "${{ inputs.extra_dependencies }}" ] && [ "${{ inputs.extra_dependencies }}" != "[]" ]; then
-          if [ -n "${{ inputs.base_dependencies }}" ] && [ "${{ inputs.base_dependencies }}" != "[]" ]; then
-            # Merge base and extra dependencies
-            merged=$(jq -s 'add | unique' <(echo '${{ inputs.base_dependencies }}') <(echo '${{ inputs.extra_dependencies }}'))
+        base_normalized=$(normalize_dependencies '${{ inputs.base_dependencies }}')
+        extra_normalized=$(normalize_dependencies '${{ inputs.extra_dependencies }}')
+
+        if [ "$extra_normalized" != "[]" ]; then
+          if [ "$base_normalized" != "[]" ]; then
+            # Merge base and extra dependencies, then keep compact JSON for outputs.
+            merged=$(jq -c -s 'add | unique' <(echo "$base_normalized") <(echo "$extra_normalized"))
           else
-            merged="${{ inputs.extra_dependencies }}"
+            merged="$extra_normalized"
           fi
         else
-          merged="${{ inputs.base_dependencies }}"
-        fi
-
-        # Ensure output is a single line. Prefer compact JSON when valid.
-        if merged_compact=$(echo "$merged" | jq -c . 2>/dev/null); then
-          merged="$merged_compact"
-        else
-          merged=$(echo "$merged" | tr '\r\n' ' ' | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')
+          merged="$base_normalized"
         fi
 
         # Set the merged dependencies as an output
