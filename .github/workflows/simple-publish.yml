@@ -126,5 +126,6 @@ jobs:
       neoforge_loader_version: ${{ inputs.neoforge_loader_version }}
       github_release_url: ${{ inputs.github_release_url }}
       discord_icon_url: ${{ inputs.discord_icon_url }}
+      discord_embed_color: ${{ needs.prepare.outputs.embed_color }}
     secrets:
       discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}

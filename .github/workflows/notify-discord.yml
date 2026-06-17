@@ -56,6 +56,11 @@ on:
         required: false
         type: string
         default: "https://raw.githubusercontent.com/Matthiesen-dev/.github/refs/heads/main/logo-transparent.png"
+      discord_embed_color:
+        description: "Decimal color code for the Discord embed (default is a shade of green)."
+        required: false
+        type: string
+        default: "5763719"
     secrets:
       discord_webhook_url:
         description: "Discord webhook URL."
@@ -80,6 +85,7 @@ jobs:
           github_release_url: ${{ inputs.github_release_url }}
           webhook_username: ${{ inputs.webhook_username }}
           webhook_avatar_url: ${{ inputs.webhook_avatar_url }}
+          discord_embed_color: ${{ inputs.discord_embed_color }}
 
       - name: Send Discord Notification
         uses: matthiesen-dev/automation/.github/actions/send-discord-payload@main

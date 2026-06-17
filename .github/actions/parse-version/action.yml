@@ -14,6 +14,9 @@ outputs:
   is_snapshot:
     description: "Indicates if the version is a snapshot version."
     value: ${{ steps.parse_version.outputs.is_snapshot }}
+  embed_color:
+    description: "Decimal color code for the Discord embed based on version type (release, beta, alpha)."
+    value: ${{ steps.parse_version.outputs.embed_color }}
 
 runs:
   using: composite
@@ -25,16 +28,29 @@ runs:
         #!/bin/bash
         set -e
 
+        RELEASE_COLOR="5763719"
+        BETA_COLOR="16776960"
+        ALPHA_COLOR="15548997"
+        VERSION_LOWER="${VERSION,,}"
         TAG_NAME="${{ inputs.tag_name }}"
 
         # Strip an optional leading v from the tag name.
         VERSION="${TAG_NAME#v}"
 
-        if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT(\..*)?$ ]]; then
+        if [[ "$VERSION_LOWER" =~ ^[0-9]+\.[0-9]+\.[0-9]+-snapshot(\..*)?$ ]]; then
           IS_SNAPSHOT="true"
         else
           IS_SNAPSHOT="false"
         fi
 
+        if [[ "$VERSION_LOWER" == *"alpha"* ]]; then
+          EMBED_COLOR="$ALPHA_COLOR"
+        elif [[ "$VERSION_LOWER" == *"beta"* ]]; then
+          EMBED_COLOR="$BETA_COLOR"
+        else
+          EMBED_COLOR="$RELEASE_COLOR"
+        fi
+
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "is_snapshot=$IS_SNAPSHOT" >> $GITHUB_OUTPUT
+        echo "embed_color=$EMBED_COLOR" >> $GITHUB_OUTPUT

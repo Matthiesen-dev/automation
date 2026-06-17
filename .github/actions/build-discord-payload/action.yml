@@ -44,6 +44,10 @@ inputs:
     description: "Avatar URL for the Discord webhook message."
     required: false
     default: "https://raw.githubusercontent.com/Matthiesen-dev/.github/refs/heads/main/logo-transparent.png"
+  discord_embed_color:
+    description: "Decimal color code for the Discord embed (default is a shade of green)."
+    required: false
+    default: "5763719"
 
 outputs:
   payload:
@@ -70,6 +74,7 @@ runs:
         REPOSITORY: ${{ github.repository }}
         SERVER_URL: ${{ github.server_url }}
         EVENT_RELEASE_URL: ${{ github.event.release.html_url }}
+        DISCORD_EMBED_COLOR: ${{ inputs.discord_embed_color }}
       shell: bash
       run: |
         set -euo pipefail
@@ -126,6 +131,7 @@ runs:
           --arg mc_version "${mc_version_value}" \
           --arg modrinth "${modrinth_value}" \
           --arg github_release_url "${github_release_value}" \
+          --arg embed_color_value "${DISCORD_EMBED_COLOR}" \
           '{
             "username": $username,
             "avatar_url": $avatar_url,
@@ -134,7 +140,7 @@ runs:
                 {
                   "title": $title,
                   "description": $description,
-                  "color": 5763719,
+                  "color": ($embed_color_value | tonumber),
                   "thumbnail": (if $icon_url != "" then {"url": $icon_url} else {"url": $avatar_url} end),
                   "fields": [
                     {
