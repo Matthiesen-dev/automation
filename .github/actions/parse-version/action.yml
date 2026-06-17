@@ -27,10 +27,10 @@ runs:
 
         TAG_NAME="${{ inputs.tag_name }}"
 
-        # Extract version from tag name (assuming format vX.Y.Z or X.Y.Z)
-        VERSION=$(echo "$TAG_NAME" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?)$/\1/')
+        # Strip an optional leading v from the tag name.
+        VERSION="${TAG_NAME#v}"
 
-        if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
+        if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT(\..*)?$ ]]; then
           IS_SNAPSHOT="true"
         else
           IS_SNAPSHOT="false"
