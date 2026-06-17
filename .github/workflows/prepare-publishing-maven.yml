@@ -34,6 +34,9 @@ on:
       is_snapshot:
         description: "Indicates if the version is a snapshot version."
         value: ${{ jobs.parse.outputs.is_snapshot }}
+      embed_color:
+        description: "Decimal color code for the Discord embed based on version type (release, beta, alpha)."
+        value: ${{ jobs.parse.outputs.embed_color }}
 
 jobs:
   parse:
@@ -41,6 +44,7 @@ jobs:
     outputs:
       version: ${{ steps.parse_version.outputs.version }}
       is_snapshot: ${{ steps.parse_version.outputs.is_snapshot }}
+      embed_color: ${{ steps.parse_version.outputs.embed_color }}
     steps:
       - name: Parse Version
         id: parse_version
