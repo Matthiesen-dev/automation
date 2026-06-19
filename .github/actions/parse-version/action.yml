@@ -43,9 +43,9 @@ runs:
           IS_SNAPSHOT="false"
         fi
 
-        if [[ "$VERSION_LOWER" == *"alpha"* ]]; then
+        if [[ "$VERSION_LOWER" =~ ^[0-9]+\.[0-9]+\.[0-9]+-alpha(\..*)?$ ]]; then
           EMBED_COLOR="$ALPHA_COLOR"
-        elif [[ "$VERSION_LOWER" == *"beta"* ]]; then
+        elif [[ "$VERSION_LOWER" =~ ^[0-9]+\.[0-9]+\.[0-9]+-beta(\..*)?$ ]]; then
           EMBED_COLOR="$BETA_COLOR"
         else
           EMBED_COLOR="$RELEASE_COLOR"
