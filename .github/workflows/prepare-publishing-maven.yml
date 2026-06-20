@@ -55,6 +55,7 @@ jobs:
       - name: Prepare release artifacts
         uses: matthiesen-dev/automation/.github/actions/prepare-release-with-maven@main
         with:
+          tag_name: ${{ inputs.tag_name }}
           version: ${{ steps.parse_version.outputs.version }}
           token: ${{ secrets.git_token }}
           java_version: ${{ inputs.java_version }}

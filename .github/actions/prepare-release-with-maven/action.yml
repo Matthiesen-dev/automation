@@ -34,6 +34,9 @@ inputs:
     description: "The glob pattern to match the files to be uploaded as release assets."
     required: false
     default: "output/*.jar"
+  tag_name:
+    description: "The tag name to parse the version from."
+    required: true
 
 runs:
   using: composite
@@ -59,3 +62,4 @@ runs:
         artifact_prefix: ${{ inputs.artifact_prefix }}
         token: ${{ inputs.token }}
         file-glob-pattern: ${{ inputs.file-glob-pattern }}
+        tag_name: ${{ inputs.tag_name }}
