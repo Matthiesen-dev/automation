@@ -27,6 +27,7 @@ jobs:
         uses: matthiesen-dev/automation/.github/actions/datapack-project-setup@main
 
       - name: Build Minecraft Datapack/Resourcepack
+        id: build
         uses: matthiesen-dev/automation/.github/actions/build-datapack@main
         with:
           project_name: ${{ inputs.artifact_name }}
@@ -35,4 +36,4 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact_name }}
-          path: "*.zip"
+          path: ${{ steps.build.outputs.artifact_name }}
