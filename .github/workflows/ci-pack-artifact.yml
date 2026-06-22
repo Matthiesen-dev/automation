@@ -1,0 +1,37 @@
+name: CI Datapack/Resourcepack Artifact Workflow
+
+on:
+  workflow_call:
+    inputs:
+      java_version:
+        description: "The Java version to use for the build."
+        required: false
+        default: "21"
+        type: string
+      java_distribution:
+        description: "The Java distribution to use for the build (e.g., 'temurin', 'zulu')."
+        required: false
+        default: "temurin"
+        type: string
+      artifact_name:
+        description: "The name to use for the uploaded artifact."
+        required: false
+        default: "build-artifacts"
+        type: string
+      upload_directory:
+        description: "The directory to upload as an artifact (relative to the repository root)."
+        required: false
+        default: "output"
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up project environment
+        uses: matthiesen-dev/automation/.github/actions/datapack-project-setup@main
+
+      - name: Build Minecraft Datapack/Resourcepack
+        uses: matthiesen-dev/automation/.github/actions/build-datapack@main
+        with:
+          project_name: ${{ inputs.artifact_name }}

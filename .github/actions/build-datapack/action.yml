@@ -7,7 +7,7 @@ inputs:
     required: true
   version:
     description: "The version to build."
-    required: true
+    required: false
 
 runs:
   using: composite
