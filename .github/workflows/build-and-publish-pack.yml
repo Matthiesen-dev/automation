@@ -7,6 +7,10 @@ on:
         description: "The tag name to parse the version from."
         required: true
         type: string
+      artifact_basename:
+        description: "The base name for the release artifacts (without loader and version)."
+        required: true
+        type: string
       mod_name:
         description: "The name of the mod to build."
         type: string
@@ -77,7 +81,7 @@ jobs:
       - name: Build Minecraft Datapack/Resourcepack
         uses: matthiesen-dev/automation/.github/actions/build-datapack@main
         with:
-          project_name: ${{ inputs.mod_name }}
+          project_name: ${{ inputs.artifact_basename }}
           version: ${{ steps.parse_version.outputs.version }}
 
       - name: Upload Release Artifacts to Github Release
@@ -85,7 +89,7 @@ jobs:
         with:
           tag_name: ${{ inputs.tag_name }}
           files: |-
-            ${{ inputs.mod_name }}-${{ steps.parse_version.outputs.version }}.zip
+            ${{ inputs.artifact_basename }}-${{ steps.parse_version.outputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.git_token }}
 
@@ -102,7 +106,7 @@ jobs:
           game-versions: ${{ inputs.modrinth_game_version }}
           dependencies: ${{ inputs.modrinth_dependencies }}
           files: |-
-            ${{ inputs.mod_name }}-${{ steps.parse_version.outputs.version }}.zip
+            ${{ inputs.artifact_basename }}-${{ steps.parse_version.outputs.version }}.zip
 
   notify_discord:
     needs: [main]
