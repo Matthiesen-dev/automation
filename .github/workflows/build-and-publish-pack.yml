@@ -102,7 +102,8 @@ jobs:
           loaders: ${{ inputs.datapack_loader == 'true' && 'datapack' || '' }}${{ inputs.resourcepack_loader == 'true' && inputs.datapack_loader == 'true' && ',' || '' }}${{ inputs.resourcepack_loader == 'true' && 'minecraft' || '' }}
           game-versions: ${{ inputs.modrinth_game_version }}
           dependencies: ${{ inputs.modrinth_dependencies }}
-          files: ${{ inputs.mod_name }}-${{ steps.parse_version.outputs.version }}.zip
+          files: |-
+            ${{ inputs.mod_name }}-${{ steps.parse_version.outputs.version }}.zip
 
   notify_discord:
     needs: [main]
