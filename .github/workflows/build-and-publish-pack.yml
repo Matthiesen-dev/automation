@@ -59,8 +59,12 @@ on:
         required: true
 
 jobs:
-  run:
+  main:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse_version.outputs.version }}
+      is_snapshot: ${{ steps.parse_version.outputs.is_snapshot }}
+      embed_color: ${{ steps.parse_version.outputs.embed_color }}
     steps:
       - name: Set up project environment
         uses: matthiesen-dev/automation/.github/actions/datapack-project-setup@main
@@ -94,7 +98,26 @@ jobs:
           name: ${{ format('{0} {1}', inputs.mod_name, steps.parse_version.outputs.version) }}
           version: ${{ steps.parse_version.outputs.version }}
           changelog: ${{ inputs.changelog }}
+          # For loader, we use "minecraft" for resourcepacks and "datapack" for datapacks. If both are true, we set it to "minecraft,datapack"
           loaders: ${{ inputs.datapack_loader == 'true' && 'datapack' || '' }}${{ inputs.resourcepack_loader == 'true' && inputs.datapack_loader == 'true' && ',' || '' }}${{ inputs.resourcepack_loader == 'true' && 'minecraft' || '' }}
           game-versions: ${{ inputs.modrinth_game_version }}
           dependencies: ${{ inputs.modrinth_dependencies }}
           files: ${{ inputs.mod_name }}-${{ steps.parse_version.outputs.version }}.zip
+
+  notify_discord:
+    needs: [main]
+    if: ${{ needs.main.outputs.is_snapshot != 'true' }}
+    uses: matthiesen-dev/automation/.github/workflows/notify-discord.yml@main
+    with:
+      mod_name: ${{ inputs.mod_name }}
+      version: ${{ needs.main.outputs.version }}
+      changelog: ${{ inputs.changelog }}
+      modrinth_game_version: ${{ inputs.modrinth_game_version }}
+      modrinth_id: ${{ inputs.modrinth_id }}
+      datapack_loader: ${{ inputs.datapack_loader }}
+      resourcepack_loader: ${{ inputs.resourcepack_loader }}
+      github_release_url: ${{ inputs.github_release_url }}
+      discord_icon_url: ${{ inputs.discord_icon_url }}
+      discord_embed_color: ${{ needs.main.outputs.embed_color }}
+    secrets:
+      discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
