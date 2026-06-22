@@ -1,0 +1,19 @@
+name: Build Minecraft Datapack/Resourcepack
+description: Builds the Minecraft Datapack/Resourcepack using the provided build tools.
+
+inputs:
+  project_name:
+    description: "The name of the project to build."
+    required: true
+  version:
+    description: "The version to build."
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Run build script
+      shell: bash
+      run: |
+        chmod +x ./automation/build-pack.sh
+        ./automation/build-pack.sh ${{ inputs.project_name }} ${{ inputs.version }}

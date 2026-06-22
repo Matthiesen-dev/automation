@@ -1,0 +1,20 @@
+name: Minecraft Datapack/Resourcepack Project Setup
+description: Sets up the Minecraft Datapack/Resourcepack project environment, including checking out the repository and ensuring the build tools are ready to use.
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Checkout automation build-tools
+      uses: actions/checkout@v6
+      with:
+        repository: "Matthiesen-dev/automation"
+        sparse-checkout: |
+          build-pack.sh
+        sparse-checkout-cone-mode: false
+        path: automation
