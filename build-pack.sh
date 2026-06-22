@@ -62,3 +62,8 @@ EXCLUDES+=("-x" ".packignore" "-x" ".git" "-x" ".git/*")
 echo "Building: $FILENAME"
 zip -r "$FILENAME" . "${EXCLUDES[@]}"
 echo "Done: $FILENAME"
+
+# Set the output variable for GitHub Actions.
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+  echo "artifact_name=$FILENAME" >> "$GITHUB_OUTPUT"
+fi

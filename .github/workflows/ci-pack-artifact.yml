@@ -18,11 +18,6 @@ on:
         required: false
         default: "build-artifacts"
         type: string
-      upload_directory:
-        description: "The directory to upload as an artifact (relative to the repository root)."
-        required: false
-        default: "output"
-        type: string
 
 jobs:
   build:
@@ -35,3 +30,9 @@ jobs:
         uses: matthiesen-dev/automation/.github/actions/build-datapack@main
         with:
           project_name: ${{ inputs.artifact_name }}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: "*.zip"

@@ -9,10 +9,16 @@ inputs:
     description: "The version to build."
     required: false
 
+outputs:
+  artifact_name:
+    description: "The name of the generated artifact (zip file)."
+    value: ${{ steps.build.outputs.artifact_name }}
+
 runs:
   using: composite
   steps:
     - name: Run build script
+      id: build
       shell: bash
       run: |
         chmod +x ./automation/build-pack.sh
