@@ -36,6 +36,16 @@ on:
         required: false
         type: string
         default: ""
+      datapack_loader:
+        description: "Indicates if this release is for a datapack (true/false). Affects the platforms field in the embed."
+        required: false
+        type: string
+        default: "false"
+      resourcepack_loader:
+        description: "Indicates if this release is for a resourcepack (true/false). Affects the platforms field in the embed."
+        required: false
+        type: string
+        default: "false"
       discord_icon_url:
         description: "Optional icon URL used as the embed thumbnail."
         required: false
@@ -81,6 +91,8 @@ jobs:
           modrinth_id: ${{ inputs.modrinth_id }}
           fabric_loader_version: ${{ inputs.fabric_loader_version }}
           neoforge_loader_version: ${{ inputs.neoforge_loader_version }}
+          datapack_loader: ${{ inputs.datapack_loader }}
+          resourcepack_loader: ${{ inputs.resourcepack_loader }}
           discord_icon_url: ${{ inputs.discord_icon_url }}
           github_release_url: ${{ inputs.github_release_url }}
           webhook_username: ${{ inputs.webhook_username }}

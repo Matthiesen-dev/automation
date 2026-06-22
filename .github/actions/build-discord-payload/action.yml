@@ -28,6 +28,14 @@ inputs:
     description: "NeoForge loader version for this release."
     required: false
     default: ""
+  datapack_loader:
+    description: "Indicates if this release is for a datapack (true/false). Affects the platforms field in the embed."
+    required: false
+    default: "false"
+  resourcepack_loader:
+    description: "Indicates if this release is for a resourcepack (true/false). Affects the platforms field in the embed."
+    required: false
+    default: "false"
   discord_icon_url:
     description: "Optional icon URL used as the embed thumbnail."
     required: false
@@ -67,6 +75,8 @@ runs:
         MODRINTH_ID: ${{ inputs.modrinth_id }}
         FABRIC_LOADER_VERSION: ${{ inputs.fabric_loader_version }}
         NEOFORGE_LOADER_VERSION: ${{ inputs.neoforge_loader_version }}
+        DATAPACK_LOADER: ${{ inputs.datapack_loader }}
+        RESOURCEPACK_LOADER: ${{ inputs.resourcepack_loader }}
         DISCORD_ICON_URL: ${{ inputs.discord_icon_url }}
         GITHUB_RELEASE_URL: ${{ inputs.github_release_url }}
         WEBHOOK_USERNAME: ${{ inputs.webhook_username }}
@@ -93,6 +103,12 @@ runs:
         fi
         if [[ -n "${NEOFORGE_LOADER_VERSION}" ]]; then
           platform_lines+=("- NeoForge \`${NEOFORGE_LOADER_VERSION}\`")
+        fi
+        if [[ "${DATAPACK_LOADER}" == "true" ]]; then
+          platform_lines+=("- Datapack")
+        fi
+        if [[ "${RESOURCEPACK_LOADER}" == "true" ]]; then
+          platform_lines+=("- Resourcepack")
         fi
 
         if [[ ${#platform_lines[@]} -eq 0 ]]; then
