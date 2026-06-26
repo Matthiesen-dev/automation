@@ -33,7 +33,8 @@ on:
         type: string
       modrinth_id:
         description: "The Modrinth project ID to publish to."
-        required: true
+        default: ""
+        required: false
         type: string
       modrinth_dependencies:
         description: "The dependencies to set for the Modrinth release (in JSON format)."
@@ -97,7 +98,7 @@ jobs:
   publish_modrinth:
     needs: prepare
     uses: matthiesen-dev/automation/.github/workflows/publish-modrinth-multiloader.yml@main
-    if: ${{ needs.prepare.outputs.is_snapshot != 'true' }}
+    if: ${{ needs.prepare.outputs.is_snapshot != 'true' && inputs.modrinth_id != '' }}
     with:
       artifact_basename: ${{ inputs.artifact_basename }}
       mod_name: ${{ inputs.mod_name }}
