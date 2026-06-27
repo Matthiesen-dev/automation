@@ -114,7 +114,7 @@ jobs:
       MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
 
   notify_discord:
-    needs: [prepare, publish_modrinth]
+    needs: [prepare]
     if: ${{ needs.prepare.outputs.is_snapshot != 'true' }}
     uses: matthiesen-dev/automation/.github/workflows/notify-discord.yml@main
     with:
